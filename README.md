@@ -25,7 +25,7 @@ it to a permanent, hotlinkable URL that unfurls properly in every chat app.
 - **The Zone Editor** — upload any screenshot, draw its text zones (live
   placeholder preview, eight resize handles), name it, and it joins the template
   pack for everyone. The picker keeps favorites and your recently used.
-- **The Paper** — the in-app whitepaper, *On the Quiddity of the Meme*
+- **White Paper** — the in-app whitepaper, *On the Quiddity of the Meme*
   ([WHITEPAPER.md](WHITEPAPER.md)), rendered at `#/paper`.
 - **Media host** — PNG, JPEG, GIF, WebP, MP4, and WebM served with byte-range
   support and one-year immutable caching. Identical bytes dedup to one slug.
@@ -156,9 +156,9 @@ committed individual.
 ## Whitepaper
 
 There is a whitepaper: [WHITEPAPER.md](WHITEPAPER.md), also served in-app under
-**The Paper**. It exists, you should read it, and it is rigorous.
+**White Paper**. It exists, you should read it, and it is rigorous.
 
-![The Paper — On the Quiddity of the Meme](docs/screenshots/paper.png)
+![White Paper — On the Quiddity of the Meme](docs/screenshots/paper.png)
 
 ## License
 

@@ -11,7 +11,7 @@ const TABS = [
   { hash: "#/", label: "Forge", view: "editor" },
   { hash: "#/wall", label: "The Wall", view: "wall" },
   { hash: "#/add-template", label: "New Template", view: "add-template" },
-  { hash: "#/paper", label: "The Paper", view: "paper" },
+  { hash: "#/paper", label: "White Paper", view: "paper" },
 ] as const
 
 export function App() {
