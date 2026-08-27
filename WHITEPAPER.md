@@ -2,7 +2,7 @@
 
 ### A Rigorous Treatment of That Which Is Imitated, with Applications to the Forge
 
-**mimema working paper № 1 — version 1.0.0 (semantically versioned; breaking changes to the concept of humor will increment the major)**
+**mimema working paper № 1 — version 1.0.0**
 
 ---
 
@@ -14,8 +14,8 @@ memes *in production* with no formal semantics, no type system, and no test
 coverage. This paper closes the gap. We define the meme as a triple, state its
 axioms, prove its fundamental theorem (a meme explained is a meme destroyed),
 resolve the essence/existence distinction for templates versus instances, and
-ground the whole apparatus in a pragmatist criterion of truth: *a meme is true
-if and only if the group chat replies "lmaoo."* We conclude with threats to
+ground the whole apparatus in a pragmatist criterion of truth under which a
+meme is true precisely insofar as it is relatable. We conclude with threats to
 validity, of which there are many, and an ethics statement, which is short.
 
 **Keywords:** memetics, quiddity, deep-frying, image macros, pragmatism,
@@ -30,7 +30,7 @@ and finding "mimeme" (from μίμημα, *that which is imitated*) too long, cut
 down to "meme" so it would sound a bit like "gene."¹ This act — truncating a
 perfectly good Greek word for virality — was itself the first meme by its own
 definition, which the reader will note is the kind of self-hosting bootstrap
-normally only achieved by compilers and sourdough starters.
+normally only achieved by compilers.
 
 Since then the meme has become the dominant medium of human sentiment, yet the
 literature remains scandalously informal. Definitions are circulated as
@@ -91,7 +91,7 @@ approximately one repost.
 
 **A4 (The Grandparent Limit).** Every meme is eventually received, sincerely
 and without irony, by someone's grandparent, at which point it exits
-circulation. This is the memetic analogue of heat death and it is beautiful.
+circulation. This is the memetic analogue of heat death.
 
 **A5 (Impact Invariance).** Any meme text set in Impact (or a licensed
 stand-in such as Anton — see §7) is *prima facie* recognized as a caption
@@ -122,8 +122,7 @@ reading it is a measurement error and should be reported as an issue.
 
 ## 5. Essence and Existence, or: The Metaphysics of the Template
 
-A certain philosopher — physician, logician, and, we are told, a great
-influence on this project's leadership — held that the *essence* (quiddity,
+A certain eleventh-century physician and logician held that the *essence* (quiddity,
 *māhiyya*) of a thing is distinct from its *existence*, and that essence in
 itself is indifferent to whether it exists.² The meme confirms this with a
 precision the eleventh century could only dream of:
@@ -150,16 +149,13 @@ from all sensation, still affirms his own self. We reach the parallel
 conclusion: the floating meme is still *self-aware* — but by Definition 2.1
 it is not yet a *meme*, because R and F are undefined. It is merely
 *content*. The distinction between a meme and content is exactly the
-distinction between a self and a corpse, and we apologize to both fields for
-this sentence.
+distinction between a self and a corpse.
 
 ² Ibn Sina, *Kitāb al-Shifāʾ* (The Book of Healing), Metaphysics I.5. The
-book did not heal anyone but the title remains aspirational, much like
-"whitepaper."
+book healed no one; the title remains aspirational.
 ³ Baudrillard, J. (1981). *Simulacres et Simulation*. A deep-fried JPEG is
 a copy so many generations removed from its original that it becomes
-hyperreal; Baudrillard predicted this and was somehow still not fun at
-parties.
+hyperreal. Baudrillard saw it coming.
 
 ---
 
@@ -192,9 +188,8 @@ unasserted. The system is, in the strict technical sense, a pragmatism
 compiler — it lowers essence (§5) into cash-value (§6) at native template
 resolution.
 
-⁴ Peirce, C.S. (1878), "How to Make Our Ideas Clear," with apologies;
-James, W. (1907), *Pragmatism*, with fewer apologies, as James would have
-had a devastating quote-tweet game.
+⁴ Peirce, C.S. (1878), "How to Make Our Ideas Clear"; James, W. (1907),
+*Pragmatism*. Neither is in a position to object.
 
 ---
 
@@ -223,7 +218,7 @@ without an outline is legally a *quote*, and by A5 the entire edifice
 collapses.
 
 **Remark 7.2 (Deep-Frying).** Let D be the deep-fry operator (saturation ↑,
-JPEG quality ↓, 🅱️ optional). D is *entropy injection*: it signals that a
+JPEG quality ↓). D is *entropy injection*: it signals that a
 meme has circulated so widely that its degradation is itself the message —
 compression artifacts as tree rings. Fitness is non-monotonic in frying
 depth: there exists an optimum (the **Maillard bound**) beyond which the

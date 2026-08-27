@@ -54,6 +54,32 @@ type Tally = { added: number; skipped: number; backfilled: number; failed: numbe
 
 const POLITENESS_MS = 150
 
+// Upstream slugs known to duplicate an existing classic under a reordered or
+// renamed title, where normalizeName can't see the match (word order differs).
+const DUPLICATE_ALIASES = new Set([
+  "ancient-aliens-guy", // = ancient-aliens
+  "one-does-not-simply-walk-into-mordor", // = one-does-not-simply
+  "oprah-you-get-a-car", // = oprah-you-get-a
+  "roll-safe", // = roll-safe-think-about-it
+  "scooby-doo-reveal", // = scooby-doo-mask-reveal
+  "say-the-line-bart", // = say-the-line-bart-simpsons
+  "skeptical-third-world-kid", // = third-world-skeptical-kid
+  "communist-bugs-bunny", // = bugs-bunny-communist
+])
+
+// Collapse a display name to a comparison key: lowercase, alphanumerics only,
+// filler words dropped, word order KEPT (the two Socially * Penguins are
+// distinct memes that differ only in word order).
+function normalizeName(name: string): string {
+  const STOP = new Set(["the", "a", "an", "of", "at", "in", "on", "to", "is", "my", "meme"])
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .split(/\s+/)
+    .filter((w) => w && !STOP.has(w))
+    .join("")
+}
+
 const config = loadConfig()
 const db = openDb(path.join(config.dataDir, "mimema.sqlite"))
 const store = new Store(db, config.dataDir)
@@ -98,10 +124,21 @@ async function importSource(
     return tally
   }
 
+  const taken = new Set(store.listTemplates().map((t) => normalizeName(t.name)))
+
   for (const candidate of candidates) {
     const id = slugifyName(candidate.name)
-    // The id IS the dedup key: a name that already resolves to a template —
-    // from the other pack, an earlier run, or one of your own — is left alone.
+    if (id && (DUPLICATE_ALIASES.has(id) || taken.has(normalizeName(candidate.name)))) {
+      // Same meme under a slightly different name than one we already hold
+      // ("Woman Yelling At Cat" vs "Woman Yelling At A Cat") — skip it.
+      if (!store.templateById(id)) {
+        tally.skipped++
+        continue
+      }
+    }
+    // The id IS the primary dedup key: a name that already resolves to a
+    // template — from the other pack, an earlier run, or one of your own — is
+    // left alone.
     const existing = id ? store.templateById(id) : undefined
     if (!id || existing) {
       // …except that rows imported before v3 have no attribution. If this row
@@ -124,6 +161,7 @@ async function importSource(
       if (!sniffed || sniffed.kind !== "image") throw new Error("not a sniffable image")
       const dims = imageSize(data, sniffed.ext) ?? candidate.fallback
       if (!dims) throw new Error("could not read image dimensions")
+      taken.add(normalizeName(candidate.name))
       store.createTemplate({
         id,
         name: candidate.name,
