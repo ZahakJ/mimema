@@ -1,5 +1,8 @@
 # mimema
 
+[![ci](https://github.com/ZahakJ/mimema/actions/workflows/ci.yml/badge.svg)](https://github.com/ZahakJ/mimema/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-8b0000.svg)](LICENSE)
+
 **μίμημα** — *that which is imitated*. A meme forge and self-hosted media host,
 dark and epic, running at [meme.avicenna.space](https://meme.avicenna.space).
 
