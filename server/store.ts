@@ -407,6 +407,35 @@ export class Store {
     return Number(changes) > 0
   }
 
+  /** Rename a template in place. The id is both the primary key and the
+   *  filename, so it never moves — only the label the picker shows and
+   *  searches on. */
+  renameTemplate(id: string, name: string): boolean {
+    const changes = this.db
+      .prepare("UPDATE templates SET name = ? WHERE id = ?")
+      .run(name, id).changes
+    return Number(changes) > 0
+  }
+
+  /** How many items were forged from a template — what repointItems would
+   *  move, without moving it. */
+  countItemsForTemplate(templateId: string): number {
+    const row = this.db
+      .prepare("SELECT COUNT(*) AS count FROM items WHERE template_id = ?")
+      .get(templateId) as unknown as { count: number }
+    return Number(row.count)
+  }
+
+  /** Move every item filed under one template to another. The FK is ON DELETE
+   *  SET NULL, so merging two duplicate templates has to repoint first or the
+   *  items quietly lose their "remix this template" link. */
+  repointItems(fromTemplateId: string, toTemplateId: string): number {
+    const changes = this.db
+      .prepare("UPDATE items SET template_id = ? WHERE template_id = ?")
+      .run(toTemplateId, fromTemplateId).changes
+    return Number(changes)
+  }
+
   deleteTemplate(id: string): boolean {
     const row = this.templateById(id)
     if (!row) return false

@@ -26,6 +26,11 @@ export default defineConfig({
   preview: { port: 6901, strictPort: true },
   test: {
     environment: "node",
-    include: ["../server/**/*.test.ts", "../shared/**/*.test.ts", "../client/**/*.test.ts"],
+    include: [
+      "../server/**/*.test.ts",
+      "../shared/**/*.test.ts",
+      "../client/**/*.test.ts",
+      "../scripts/**/*.test.ts",
+    ],
   },
 })

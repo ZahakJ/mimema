@@ -23,7 +23,8 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
   (smoke loads every route twice: desktop 1440x900 and a touch phone 390x844,
   drives the phone-only tray → sheet → ship path, and fails if a control lands
   off-screen)
-- `npm run templates` — idempotently pull the ~290-template pack (imgflip + memegen.link, name-collision deduped, attribution recorded) into `data/`
+- `npm run templates` — idempotently pull the ~270-template pack (imgflip + memegen.link, deduped, attribution recorded) into `data/`
+- `npm run templates:dedupe [-- --dry-run]` — prune duplicates an older pull let in (destructive, so it's deliberately not part of `npm run templates`)
 - `npm run seed` — import `seed-assets/` as the first wall items (sha-dedup, re-runnable)
 - `npm start` — prod server (reads `.env`, defaults PORT 8001)
 
@@ -74,6 +75,17 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
 - Media URLs are immutable (`/m/<slug>.<ext>`, 1y immutable cache); a new
   upload gets a new slug. Share page `/m/<slug>` (no ext) carries the OG tags.
 - items dedup by sha256 — re-uploading identical bytes returns the existing slug.
+- Template dedup is **name-based and therefore blind**: the two packs ship the
+  same picture under different titles ("Two Buttons"/"Daily Struggle",
+  "Bell Curve"/"Midwit"). `scripts/duplicates.ts` is the hand-curated,
+  eye-confirmed list of those, and the single source of truth for both
+  `fetch-templates.ts` (never import them) and `dedupe-templates.ts` (prune
+  what an older run did). A perceptual hash can only *propose* pairs — it
+  calls every four-panel meme a duplicate of every other, and would happily
+  merge the four Socially * Penguins, which are four different memes.
+- Deleting a template must repoint `items.template_id` first: the FK is
+  `ON DELETE SET NULL`, so a plain delete silently strips the "remix this
+  template" link off every meme forged from it.
 - localStorage keys are namespaced `mimema:v1:*`.
 - **Every responsive rule lives in `client/styles/mobile.css`** — two blocks,
   deliberately separate: `max-width: 900px` (LAYOUT) and `pointer: coarse`
