@@ -7,6 +7,9 @@
 // Idempotent: a template whose slugified name is already taken is skipped, so
 // re-running adds only what's new and never disturbs your customs. Individual
 // failures are non-fatal; an upstream being down skips that source entirely.
+// The packs overlap: ids that are the same picture under a different title are
+// refused here from duplicates.ts, and `npm run templates:dedupe` prunes any
+// an older run let through.
 //   npm run templates
 import path from "node:path"
 import { loadConfig } from "../server/config.ts"
@@ -15,6 +18,7 @@ import { Store } from "../server/store.ts"
 import { sniff } from "../server/sniff.ts"
 import { imageSize } from "../server/imageSize.ts"
 import { slugifyName } from "../server/slugs.ts"
+import { DUPLICATE_ALIASES } from "./duplicates.ts"
 import { defaultZones } from "../shared/schema.ts"
 import type { TemplateSource, Zone } from "../shared/schema.ts"
 
@@ -53,19 +57,6 @@ type Candidate = {
 type Tally = { added: number; skipped: number; backfilled: number; failed: number }
 
 const POLITENESS_MS = 150
-
-// Upstream slugs known to duplicate an existing classic under a reordered or
-// renamed title, where normalizeName can't see the match (word order differs).
-const DUPLICATE_ALIASES = new Set([
-  "ancient-aliens-guy", // = ancient-aliens
-  "one-does-not-simply-walk-into-mordor", // = one-does-not-simply
-  "oprah-you-get-a-car", // = oprah-you-get-a
-  "roll-safe", // = roll-safe-think-about-it
-  "scooby-doo-reveal", // = scooby-doo-mask-reveal
-  "say-the-line-bart", // = say-the-line-bart-simpsons
-  "skeptical-third-world-kid", // = third-world-skeptical-kid
-  "communist-bugs-bunny", // = bugs-bunny-communist
-])
 
 // Collapse a display name to a comparison key: lowercase, alphanumerics only,
 // filler words dropped, word order KEPT (the two Socially * Penguins are
