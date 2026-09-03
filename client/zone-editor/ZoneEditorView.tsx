@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { api } from "../api/client.ts"
 import { useAuth } from "../store/authStore.ts"
 import { navigate } from "../router.ts"
+import { usePhone } from "../usePhone.ts"
 import { toast } from "../components/Toasts.tsx"
 import { InviteKeyDialog } from "../components/InviteKeyDialog.tsx"
 import { applyDrag, applyResize, HANDLES, type FracRect, type Handle } from "../editor/interactions.ts"
@@ -39,6 +40,7 @@ function isHandle(value: string | undefined): value is Handle {
 // name it, and jump straight into the forge with it.
 export function ZoneEditorView() {
   const verified = useAuth((s) => s.verified)
+  const phone = usePhone()
   const [file, setFile] = useState<File | null>(null)
   const [src, setSrc] = useState<string | null>(null)
   const [dims, setDims] = useState({ w: 1, h: 1 })
@@ -218,7 +220,7 @@ export function ZoneEditorView() {
 
   return (
     <div
-      className="mm-zone"
+      className={`mm-zone${src ? "" : " mm-zone--empty"}`}
       onDragEnter={(e) => {
         e.preventDefault()
         setDragging((d) => d + 1)
@@ -351,8 +353,12 @@ export function ZoneEditorView() {
           </div>
         ) : (
           <div className="ms-empty" style={{ height: "100%" }}>
-            <div className="mm-editor__glyph">⿴</div>
-            <div className="ms-empty__title">drop a screenshot, mark the zones, meme forever</div>
+            <div className="mm-editor__glyph">⊞</div>
+            <div className="ms-empty__title">
+              {phone
+                ? "choose a screenshot, mark the zones, meme forever"
+                : "drop a screenshot, mark the zones, meme forever"}
+            </div>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useEditor } from "../store/editorStore.ts"
 import { useAuth } from "../store/authStore.ts"
 import { api } from "../api/client.ts"
@@ -15,13 +15,26 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
   const verified = useAuth((s) => s.verified)
   const [title, setTitle] = useState("")
   const [tags, setTags] = useState<string[]>([])
-  const [busy, setBusy] = useState<"download" | "copy" | "publish" | null>(null)
+  const [busy, setBusy] = useState<"download" | "copy" | "share" | "publish" | null>(null)
   const [published, setPublished] = useState<ItemDto | null>(null)
   const [keyOpen, setKeyOpen] = useState(false)
+
+  // Phones share, they don't download — but only offer it where the platform
+  // actually takes a PNG (probed with an empty file, never sent anywhere).
+  const canShareFile = useMemo(() => {
+    try {
+      const probe = new File([new Blob()], "meme.png", { type: "image/png" })
+      return typeof navigator.canShare === "function" && navigator.canShare({ files: [probe] })
+    } catch {
+      return false
+    }
+  }, [])
 
   if (!doc) return null
 
   const render = () => exportPng(doc, template?.imageUrl ?? null)
+
+  const filename = `${(title.trim() || template?.id || "meme").replaceAll(/\s+/g, "-")}.png`
 
   const download = async () => {
     setBusy("download")
@@ -29,7 +42,7 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
       const blob = await render()
       const a = document.createElement("a")
       a.href = URL.createObjectURL(blob)
-      a.download = `${(title.trim() || template?.id || "meme").replaceAll(/\s+/g, "-")}.png`
+      a.download = filename
       a.click()
       URL.revokeObjectURL(a.href)
     } catch {
@@ -52,6 +65,24 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
       toast("PNG on your clipboard ⧉")
     } catch {
       toast("Copy failed — download instead", "warn")
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // The render has to finish before share() is called (it needs the file), so
+  // this leans on the ~5s transient-activation window rather than the click.
+  const shareFile = async () => {
+    setBusy("share")
+    try {
+      const blob = await render()
+      await navigator.share({
+        files: [new File([blob], filename, { type: "image/png" })],
+        title: title.trim() || "a meme",
+      })
+    } catch (err) {
+      // the share sheet's own cancel button lands here — that isn't a failure
+      if (err instanceof Error && err.name !== "AbortError") toast("Share failed", "warn")
     } finally {
       setBusy(null)
     }
@@ -103,6 +134,15 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
               <TagInput tags={tags} onChange={setTags} />
               {doc.deepFry && <div className="mm-dialog__hint">🍟 will be deep-fried on export</div>}
               <div className="mm-dialog__row">
+                {canShareFile && (
+                  <button
+                    className="ms-btn"
+                    disabled={busy !== null}
+                    onClick={() => void shareFile()}
+                  >
+                    {busy === "share" ? "Rendering…" : "⤳ Share"}
+                  </button>
+                )}
                 <button className="ms-btn" disabled={busy !== null} onClick={() => void download()}>
                   {busy === "download" ? "Rendering…" : "⇩ Download PNG"}
                 </button>

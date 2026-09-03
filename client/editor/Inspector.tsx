@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react"
 import { useEditor } from "../store/editorStore.ts"
+import { usePhone } from "../usePhone.ts"
 import { PublishDialog } from "./PublishDialog.tsx"
 import { loadImage } from "./exportPng.ts"
 import { DEFAULT_TEXT_SHADOW, MEME_FONTS } from "../../shared/schema.ts"
 import type { Layer, TextLayer } from "../../shared/schema.ts"
 
-export function Inspector() {
+/** `autoFocusText` is the phone path: the inspector only mounts when its sheet
+ *  opens, so a double-tap on a text zone can't reach it through the window
+ *  event the desktop uses — it arrives as a prop instead. */
+export function Inspector({ autoFocusText = false }: { autoFocusText?: boolean } = {}) {
   const doc = useEditor((s) => s.doc)
   const selectedId = useEditor((s) => s.selectedId)
   const past = useEditor((s) => s.past)
@@ -25,6 +29,7 @@ export function Inspector() {
     redo,
   } = useEditor.getState()
   const [publishOpen, setPublishOpen] = useState(false)
+  const phone = usePhone()
   const fileRef = useRef<HTMLInputElement>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   // typing coalesces into word-ish undo steps: the first keystroke after a
@@ -38,6 +43,10 @@ export function Inspector() {
     window.addEventListener("mimema:focus-text", onFocusText)
     return () => window.removeEventListener("mimema:focus-text", onFocusText)
   }, [])
+
+  useEffect(() => {
+    if (autoFocusText) textRef.current?.focus()
+  }, [autoFocusText])
 
   useEffect(() => {
     freshRef.current = true
@@ -76,7 +85,7 @@ export function Inspector() {
   return (
     <aside className="mm-inspector">
       <div className="mm-inspector__scroll">
-        <section className="mm-inspector__group">
+        <section className="mm-inspector__group mm-group--add">
           <div className="mm-inspector__title">Layers</div>
           <div className="mm-inspector__row">
             <button className="ms-btn" onClick={addTextLayer}>
@@ -97,11 +106,13 @@ export function Inspector() {
               }}
             />
           </div>
-          <div className="mm-inspector__hint">or paste an image from the clipboard</div>
+          {!phone && (
+            <div className="mm-inspector__hint">or paste an image from the clipboard</div>
+          )}
         </section>
 
         {text && (
-          <section className="mm-inspector__group">
+          <section className="mm-inspector__group mm-group--text">
             <div className="mm-inspector__title">Text</div>
             <textarea
               ref={textRef}
@@ -270,7 +281,7 @@ export function Inspector() {
         )}
 
         {doc.layers.length > 0 && (
-          <section className="mm-inspector__group">
+          <section className="mm-inspector__group mm-group--stack">
             <div className="mm-inspector__title">Stack</div>
             <div className="mm-layers">
               {[...doc.layers].reverse().map((l, i) => {
@@ -317,7 +328,7 @@ export function Inspector() {
         )}
 
         {layer && (
-          <section className="mm-inspector__group">
+          <section className="mm-inspector__group mm-group--sel">
             <div className="mm-inspector__title">Selected layer</div>
             <div className="mm-inspector__row">
               {layer.angle !== 0 && (
@@ -331,14 +342,20 @@ export function Inspector() {
               </button>
             </div>
             <div className="mm-inspector__hint">
-              drag to move · corners resize · ⟳ rotates · arrows nudge · Del removes ·{" "}
-              <span className="mono">Ctrl/⌘+D</span> duplicates · <span className="mono">Esc</span>{" "}
-              deselects
+              {phone ? (
+                <>drag to move · corners resize · ⟳ rotates · double-tap a text zone to type</>
+              ) : (
+                <>
+                  drag to move · corners resize · ⟳ rotates · arrows nudge · Del removes ·{" "}
+                  <span className="mono">Ctrl/⌘+D</span> duplicates ·{" "}
+                  <span className="mono">Esc</span> deselects
+                </>
+              )}
             </div>
           </section>
         )}
 
-        <section className="mm-inspector__group">
+        <section className="mm-inspector__group mm-group--fry">
           <div className="mm-inspector__title">Cookery</div>
           <button
             className={`ms-toggle${doc.deepFry ? " ms-toggle--on" : ""}`}
@@ -354,7 +371,7 @@ export function Inspector() {
           )}
         </section>
 
-        <section className="mm-inspector__group">
+        <section className="mm-inspector__group mm-group--history">
           <div className="mm-inspector__row">
             <button className="ms-btn" disabled={past.length === 0} onClick={undo} title="Ctrl+Z">
               ↩ undo

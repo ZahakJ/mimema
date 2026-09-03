@@ -5,6 +5,10 @@
  * every route in headless Chromium — wait for body[data-app-ready="1"], fail on
  * any console error, save screenshots/<route>.png.
  *
+ * Runs twice: once at desktop 1440x900, once as a touch phone (390x844), where
+ * it also drives the phone-only path — bottom tab bar, template sheet, tray —
+ * and asserts nothing lands off-screen or under the chrome.
+ *
  *   node tools/screenshot.mjs [--no-build]
  */
 import { spawn, execSync } from "node:child_process"
@@ -64,17 +68,17 @@ try {
   const item = await itemRes.json()
 
   const browser = await chromium.launch()
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
   const errors = []
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text())
-  })
-  page.on("pageerror", (err) => errors.push(String(err)))
+
+  // ————— desktop —————
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  watch(page, errors)
 
   const routes = [
     ["forge", "/#/"],
     ["wall", "/#/wall"],
     ["add-template", "/#/add-template"],
+    ["paper", "/#/paper"],
   ]
   for (const [name, path] of routes) {
     await page.goto(`${ORIGIN}${path}`, { waitUntil: "networkidle" })
@@ -94,6 +98,87 @@ try {
   await page.goto(`${ORIGIN}${item.shareUrl}`, { waitUntil: "networkidle" })
   await page.screenshot({ path: join(ROOT, "screenshots", "share.png") })
   console.log("  ✓ share")
+  await page.close()
+
+  // ————— phone —————
+  const phoneCtx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 " +
+      "(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  })
+  const phone = await phoneCtx.newPage()
+  watch(phone, errors)
+
+  for (const [name, path] of routes) {
+    await phone.goto(`${ORIGIN}${path}`, { waitUntil: "networkidle" })
+    await phone.waitForSelector('body[data-app-ready="1"]', { timeout: 10000 })
+
+    // the tab bar is the only way around on a phone — every tab must be
+    // on-screen and tappable, which is exactly what was broken before
+    for (const tab of await phone.locator(".mm-nav--bottom .mm-nav__tab").all()) {
+      const box = await tab.boundingBox()
+      if (!box) throw new Error(`${name}: a bottom tab has no box`)
+      if (box.x < 0 || box.x + box.width > 390)
+        throw new Error(`${name}: bottom tab spills off-screen at x=${box.x}`)
+      if (box.height < 40) throw new Error(`${name}: bottom tab only ${box.height}px tall`)
+    }
+
+    if (name === "forge") {
+      // the whole phone path: tray → template sheet → pick → edit sheet with
+      // the text box → ship, none of it ever scrolling the page itself
+      await phone.click(".mm-tray__btn")
+      await phone.waitForSelector(".mm-sheet .mm-thumb", { timeout: 5000 })
+      await phone.waitForTimeout(300)
+      await phone.screenshot({ path: join(ROOT, "screenshots", "phone-templates.png") })
+
+      await phone.click(".mm-sheet .mm-thumb__pick")
+      await phone.waitForSelector(".mm-stage__canvas", { timeout: 5000 })
+      await phone.waitForSelector(".mm-sheet .mm-text-input", { timeout: 5000 })
+      await phone.fill(".mm-sheet .mm-text-input", "ON A PHONE")
+      await phone.waitForTimeout(300)
+      await phone.screenshot({ path: join(ROOT, "screenshots", "phone-forge-sheet.png") })
+      await phone.keyboard.press("Escape")
+      await phone.waitForTimeout(300)
+
+      await phone.click(".mm-tray__ship")
+      await phone.waitForSelector(".mm-dialog", { timeout: 5000 })
+      await phone.waitForTimeout(300)
+      await phone.screenshot({ path: join(ROOT, "screenshots", "phone-publish.png") })
+      await phone.keyboard.press("Escape")
+      await phone.waitForTimeout(300)
+    }
+    if (name === "wall") {
+      await phone.click(".mm-card__media")
+      await phone.waitForSelector(".mm-light", { timeout: 5000 })
+      await phone.waitForTimeout(250)
+      await phone.screenshot({ path: join(ROOT, "screenshots", "phone-lightbox.png") })
+      await phone.keyboard.press("Escape")
+      await phone.waitForTimeout(200)
+    }
+
+    // body{overflow:hidden} means a desktop-shaped row doesn't widen the
+    // document, it just walks off the edge unreachably — which is precisely
+    // how the header nav used to strand every tab. Measure the controls.
+    const spills = await phone.evaluate(() => {
+      const w = window.innerWidth
+      const sel =
+        ".ms-hud__titlebar > *, .mm-nav--bottom .mm-nav__tab, .mm-tray > *," +
+        " .mm-wall__bar > *, .mm-card, .mm-sheet, .mm-light__row > *"
+      return [...document.querySelectorAll(sel)]
+        .map((el) => [el.className, el.getBoundingClientRect()])
+        .filter(([, r]) => r.width > 0 && (r.left < -1 || r.right > w + 1))
+        .map(([cls, r]) => `${cls} [${Math.round(r.left)}…${Math.round(r.right)}]`)
+    })
+    if (spills.length) throw new Error(`${name}: off-screen — ${spills.join(", ")}`)
+
+    await phone.waitForTimeout(200)
+    await phone.screenshot({ path: join(ROOT, "screenshots", `phone-${name}.png`) })
+    console.log(`  ✓ phone ${name}`)
+  }
 
   await browser.close()
 
@@ -112,6 +197,14 @@ try {
   rmSync(dataDir, { recursive: true, force: true })
 }
 process.exit(failed ? 1 : 0)
+
+/** Any console error or uncaught throw on a page fails the whole run. */
+function watch(page, errors) {
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text())
+  })
+  page.on("pageerror", (err) => errors.push(String(err)))
+}
 
 async function waitFor(url, ms) {
   const deadline = Date.now() + ms
