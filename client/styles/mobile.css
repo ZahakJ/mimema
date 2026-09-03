@@ -1,0 +1,597 @@
+/* ═══════════ the phone layer ═══════════
+   Every responsive rule in Mimema lives here, so "how does this look on a
+   phone" is one file, not a scavenger hunt.
+
+   Two axes, deliberately separate:
+     @media (max-width: 900px)  — LAYOUT. The three rails of the forge collapse
+                                  into a canvas + a tray + bottom sheets, and
+                                  the tab bar drops to the thumb.
+     @media (pointer: coarse)   — TOUCH. Fatter grab handles, 16px inputs (any
+                                  smaller and iOS zooms the page on focus), and
+                                  hover flourishes that would otherwise stick
+                                  after a tap.
+   A desktop window dragged narrow gets the first and not the second; an iPad
+   with a keyboard gets the second and not the first. */
+
+/* ─────────────────────────────────────────────────────────────
+   LAYOUT — small glass
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* the whole document agrees on the shorter titlebar, so the forge can do
+     arithmetic against it */
+  body {
+    --hud-h: 52px;
+  }
+
+  /* ————— titlebar: mark + key, nothing else ————— */
+  .ms-hud__titlebar {
+    height: calc(var(--hud-h) + var(--safe-t));
+    padding: var(--safe-t) max(var(--sp-3), var(--safe-r)) 0
+      max(var(--sp-3), var(--safe-l));
+    gap: var(--sp-2);
+  }
+  .ms-hud__titlebar::after {
+    top: calc(var(--hud-h) + var(--safe-t));
+  }
+  .ms-hud__mark {
+    min-width: 0;
+  }
+  .ms-hud__app {
+    font-size: var(--fs-lg);
+    letter-spacing: 0.12em;
+  }
+  /* the tagline is a desktop luxury */
+  .ms-hud__sub {
+    display: none;
+  }
+
+  /* ————— navigation moves to the thumb ————— */
+  .mm-nav--top {
+    display: none;
+  }
+  .mm-nav--bottom {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 0;
+    flex: none;
+    z-index: 30;
+    border-top: 1px solid var(--line-1);
+    background: var(--bg-1);
+    backdrop-filter: blur(var(--panel-blur));
+    padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+  }
+  .mm-nav--bottom .mm-nav__tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: var(--tabbar-h);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    font-size: var(--fs-2xs);
+    letter-spacing: 0.06em;
+  }
+  .mm-nav--bottom .mm-nav__glyph {
+    display: block;
+    font-size: 19px;
+    line-height: 1;
+  }
+  .mm-nav--bottom .mm-nav__tab--active {
+    background: none;
+    color: var(--accent);
+  }
+  /* the active tab wears the flame gradient as an underline, top edge */
+  .mm-nav--bottom .mm-nav__tab--active::before {
+    content: '';
+    position: absolute;
+    inset: 0 22% auto;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: var(--grad);
+  }
+  .mm-nav--bottom .mm-nav__tab--active .mm-nav__glyph {
+    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.5));
+  }
+
+  /* ————— the forge: canvas on top, everything else in a sheet ————— */
+  .mm-editor {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    overflow: hidden;
+  }
+  .mm-stage {
+    flex: 1;
+    min-height: 0;
+    padding: var(--sp-2);
+  }
+  /* While the edit sheet is up the stage gives way, so the meme you are
+     editing stays on screen above it — the canvas refits itself. The height is
+     exactly the gap the sheet leaves: everything above its 62dvh, less the
+     titlebar. Landscape gets a thin strip, which beats a hidden canvas. */
+  .mm-editor--lifted .mm-stage {
+    flex: 0 0 auto;
+    height: calc(38dvh - var(--hud-h) - var(--safe-t) - 4px);
+  }
+  .mm-editor__empty {
+    flex: 1;
+    grid-column: auto;
+    height: auto;
+    padding: var(--sp-5);
+  }
+  .mm-editor__glyph {
+    font-size: 52px;
+  }
+
+  /* ————— the wall ————— */
+  .mm-wall {
+    padding: var(--sp-3) max(var(--sp-3), var(--safe-r)) var(--sp-6)
+      max(var(--sp-3), var(--safe-l));
+  }
+  .mm-wall__bar {
+    top: calc(-1 * var(--sp-3));
+    margin: 0 0 var(--sp-4);
+    padding: var(--sp-2);
+    gap: var(--sp-2);
+  }
+  .mm-wall__bar .ms-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .mm-wall__bar .mm-field-select {
+    /* small basis, free growth: the filters and both action glyphs fit one row */
+    flex: 1 1 25%;
+    min-width: 0;
+    max-width: none;
+  }
+  /* shuffle and upload shed their words and become thumb-sized glyphs */
+  .mm-wordy {
+    display: none;
+  }
+  .mm-wall__bar .ms-btn {
+    flex: 0 0 auto;
+  }
+  .mm-wall__count {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+  /* one meme at a time — a phone column is not a masonry */
+  .mm-masonry {
+    columns: 1;
+  }
+  .mm-tagbar {
+    /* the tag cloud scrolls sideways instead of eating half the screen */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-2);
+  }
+  .mm-tagbar::-webkit-scrollbar {
+    display: none;
+  }
+  .mm-tagbar .mm-tag {
+    flex: none;
+  }
+
+  /* ————— the zone editor: image first, controls under it ————— */
+  .mm-zone {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: var(--sp-3);
+    padding: var(--sp-3) max(var(--sp-3), var(--safe-r)) var(--sp-5)
+      max(var(--sp-3), var(--safe-l));
+    overflow-y: auto;
+  }
+  .mm-zone__stage {
+    order: -1;
+    flex: none;
+    min-height: 40dvh;
+  }
+  /* …until there is no image, when "choose one" is the only thing that matters */
+  .mm-zone--empty .mm-zone__stage {
+    order: 1;
+    min-height: 22dvh;
+  }
+  .mm-zone__side {
+    flex: none;
+  }
+  /* percentage max-heights don't resolve against an auto-height flex parent —
+     cap the frame in viewport units or a tall portrait swallows the screen */
+  .mm-zone__frame {
+    max-height: 52dvh;
+  }
+
+  /* ————— the paper ————— */
+  .mm-paper {
+    padding: var(--sp-5) max(var(--sp-4), var(--safe-r)) var(--sp-7)
+      max(var(--sp-4), var(--safe-l));
+  }
+  .mm-paper__doc {
+    font-size: var(--fs-md);
+  }
+  .mm-paper__doc h2 {
+    margin-top: var(--sp-7);
+    font-size: var(--fs-xl);
+  }
+
+  /* ————— lightbox: a scrollable full-screen sheet ————— */
+  .mm-light {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: calc(var(--safe-t) + 56px) var(--sp-3) calc(var(--safe-b) + var(--sp-6));
+    text-align: center;
+  }
+  .mm-light > * {
+    margin: 0 auto var(--sp-3);
+  }
+  .mm-light__media {
+    max-width: 100%;
+    max-height: 52dvh;
+  }
+  .mm-light__close {
+    position: fixed;
+    top: calc(var(--safe-t) + var(--sp-2));
+    right: max(var(--sp-3), var(--safe-r));
+    background: var(--bg-1);
+    z-index: 2;
+  }
+  .mm-light__title {
+    font-size: var(--fs-md);
+  }
+  .mm-light__reacts {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mm-light__row .ms-btn {
+    flex: 1 1 44%;
+  }
+  .mm-light__edit {
+    width: 100%;
+  }
+
+  /* ————— dialogs become sheets too ————— */
+  .mm-scrim {
+    align-items: flex-end;
+  }
+  .mm-dialog {
+    width: 100%;
+    max-height: 92dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--r-3) var(--r-3) 0 0;
+    border-bottom: none;
+    /* opaque for the same reason the sheets are — see --sheet */
+    background: var(--sheet);
+    backdrop-filter: none;
+    padding-bottom: calc(var(--safe-b) + var(--sp-3));
+    animation: mm-rise var(--dur-travel) var(--ease);
+  }
+  .mm-dialog__row .ms-btn,
+  .mm-dialog__row .mm-tag {
+    flex: 1 1 44%;
+  }
+
+  /* ————— toasts clear the tab bar ————— */
+  .ms-toasts {
+    left: max(var(--sp-3), var(--safe-l));
+    right: max(var(--sp-3), var(--safe-r));
+    bottom: calc(var(--safe-b) + var(--tabbar-h) + var(--sp-3));
+  }
+  .ms-toast {
+    max-width: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   The tray — the forge's own toolbar, phone only
+   ───────────────────────────────────────────────────────────── */
+.mm-tray {
+  display: flex;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-2) max(var(--sp-2), var(--safe-r)) var(--sp-2)
+    max(var(--sp-2), var(--safe-l));
+  border-top: 1px solid var(--line-1);
+  background: var(--bg-1);
+  backdrop-filter: blur(var(--panel-blur));
+}
+.mm-tray__btn {
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--sp-2) var(--sp-1);
+  min-height: 50px;
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.04em;
+}
+.mm-tray__glyph {
+  font-size: 17px;
+  line-height: 1.1;
+}
+/* ship gets the full gradient — it is the point of the whole app */
+.mm-tray__ship {
+  border: none;
+  background: var(--grad);
+  background-size: 180% 100%;
+  color: #1a0708;
+  font-weight: 700;
+}
+.mm-tray__ship:disabled {
+  opacity: 0.4;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Bottom sheets — the picker and the inspector, summoned
+   ───────────────────────────────────────────────────────────── */
+.mm-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  display: flex;
+  align-items: flex-end;
+  /* dim, never blur: the canvas above the sheet is the thing being edited,
+     and you have to be able to read it while you type */
+  background: rgba(0, 0, 0, 0.4);
+  animation: ms-fade-in var(--dur-control) ease-out;
+}
+/* the non-modal case: no dimming, and every tap outside the sheet falls
+   through to the canvas underneath it */
+.mm-sheet-scrim--open {
+  background: none;
+  pointer-events: none;
+}
+.mm-sheet-scrim--open .mm-sheet {
+  pointer-events: auto;
+}
+.mm-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 62dvh;
+  overflow: hidden;
+  background: var(--sheet);
+  border-top: 1px solid var(--line-2);
+  border-radius: var(--r-3) var(--r-3) 0 0;
+  box-shadow: var(--shadow-2);
+  padding-bottom: var(--safe-b);
+  animation: mm-rise var(--dur-travel) var(--ease);
+}
+/* the ember hairline, same signature as the titlebar */
+.mm-sheet::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--grad);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.mm-sheet--tall {
+  max-height: 88dvh;
+}
+@keyframes mm-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-sheet,
+  .mm-dialog {
+    animation: none;
+  }
+}
+/* the grab bar — drag it down to dismiss */
+.mm-sheet__grab {
+  flex: none;
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  cursor: grab;
+  touch-action: none;
+}
+.mm-sheet__grip {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+.mm-sheet__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+  padding: 0 var(--sp-3) var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line-1);
+}
+.mm-sheet__title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.mm-sheet__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  touch-action: auto;
+}
+/* the rails shed their chrome once they are inside a sheet */
+.mm-sheet .mm-picker,
+.mm-sheet .mm-inspector {
+  flex: 1;
+  min-height: 0;
+  border: none;
+  background: none;
+  backdrop-filter: none;
+}
+.mm-sheet .mm-picker__scroll,
+.mm-sheet .mm-inspector__scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+/* the sticky bucket headings have to match the surface they scroll over */
+.mm-sheet .mm-picker__head {
+  background: linear-gradient(var(--sheet) 82%, transparent);
+}
+.mm-sheet .mm-picker__grid {
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+}
+/* Ship lives in the tray on a phone — one ship button, not two */
+.mm-sheet .mm-inspector__footer {
+  display: none;
+}
+/* whatever you came here to type comes first */
+.mm-sheet .mm-group--text {
+  order: -1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TOUCH — fingers are not mice
+   ───────────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  /* 16px or iOS zooms the whole page the moment a field takes focus */
+  .ms-search input,
+  .mm-tags__input,
+  .mm-text-input,
+  .mm-field select,
+  .mm-field-select,
+  input[type='text'],
+  input[type='search'],
+  input[type='password'],
+  textarea {
+    font-size: 16px;
+  }
+
+  /* grab handles you can actually land on */
+  .mm-sel__handle {
+    width: 20px;
+    height: 20px;
+    margin: -10px;
+    border-radius: 3px;
+  }
+  .mm-sel__stem {
+    top: -30px;
+    height: 30px;
+  }
+  .mm-sel__rotate {
+    top: -52px;
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+  .mm-zone__grip {
+    width: 20px;
+    height: 20px;
+  }
+  .mm-zone__rect {
+    border-width: 2px;
+  }
+
+  /* 44px is the floor for anything you tap */
+  .ms-btn {
+    min-height: 44px;
+  }
+  .ms-btn--icon {
+    width: 44px;
+    height: 44px;
+  }
+  .ms-seg__opt {
+    min-height: 44px;
+    padding-inline: var(--sp-4);
+  }
+  .mm-layer {
+    padding: var(--sp-2);
+  }
+  .mm-layer__move {
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+  }
+  .mm-tag {
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .mm-tag__x {
+    padding: 0 var(--sp-1);
+  }
+  .mm-swatch input[type='color'] {
+    width: 36px;
+    height: 36px;
+  }
+  .ms-slider input[type='range'] {
+    height: 20px; /* the track stays hairline-thin; the target does not */
+    background: none;
+    background-image: linear-gradient(var(--line-2), var(--line-2));
+    background-size: 100% 2px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .ms-slider input[type='range']::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  .ms-slider input[type='range']::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* a tap leaves :hover stuck on — so no hover flourish survives it */
+  .mm-thumb:hover,
+  .mm-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--line-1);
+  }
+  .mm-thumb:hover img,
+  .mm-dice:hover {
+    transform: none;
+  }
+  .mm-card:hover .mm-card__title {
+    color: inherit;
+  }
+  .mm-react:hover:not(:disabled),
+  .mm-ship:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .mm-thumb__star:hover {
+    transform: none;
+    color: var(--text-3);
+  }
+  .mm-thumb__star--on:hover {
+    color: var(--gold);
+  }
+  /* …replaced by a press state, which touch actually has */
+  .ms-btn:active,
+  .mm-tag:active,
+  .mm-thumb:active,
+  .mm-card:active,
+  .mm-react:active:not(:disabled),
+  .mm-tray__btn:active,
+  .mm-nav__tab:active {
+    opacity: 0.7;
+  }
+  .mm-thumb--active,
+  .mm-thumb--active:hover {
+    border-color: var(--accent);
+  }
+}

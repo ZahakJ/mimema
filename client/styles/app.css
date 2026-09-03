@@ -1,10 +1,18 @@
 /* ═══════════ Mimema-specific (mm-) ═══════════ */
 
-/* ————— nav tabs ————— */
+/* ————— nav tabs —————
+   Rendered twice: in the titlebar for desktop, as a thumb-height tab bar at the
+   bottom for phones. mobile.css swaps which one exists. */
 .mm-nav {
   display: flex;
   gap: var(--sp-2);
   margin-left: var(--sp-5);
+}
+.mm-nav--bottom {
+  display: none;
+}
+.mm-nav__glyph {
+  display: none;
 }
 .mm-nav__tab {
   padding: var(--sp-3) var(--sp-5);
@@ -214,7 +222,12 @@
 .mm-stage__frame {
   position: relative;
   outline: none;
+  /* the frame owns every touch inside it: no scroll, no pinch, no long-press
+     magnifier, no accidental text selection mid-drag */
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .mm-stage__frame:focus-visible {
   outline: 1px solid var(--accent-line);
@@ -907,6 +920,7 @@
   padding: var(--sp-6);
 }
 .mm-light__media {
+  display: block;
   max-width: min(92vw, 1100px);
   max-height: 74vh;
   object-fit: contain;
@@ -1172,55 +1186,7 @@
   color: var(--text-3);
   text-align: center;
 }
-@media (max-width: 700px) {
-  .mm-paper {
-    padding: var(--sp-6) var(--sp-4) var(--sp-7);
-  }
-  .mm-paper__doc {
-    font-size: var(--fs-md);
-  }
-}
-
-@media (max-width: 900px) {
-  .mm-zone {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-  .mm-zone__stage {
-    min-height: 300px;
-  }
-}
-
-/* narrow screens: stack panels */
-@media (max-width: 900px) {
-  .mm-editor {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    overflow-y: auto;
-  }
-  .mm-picker {
-    border-right: none;
-    border-bottom: 1px solid var(--line-1);
-    max-height: 180px;
-  }
-  .mm-picker__grid {
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    grid-auto-columns: 120px;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  .mm-inspector {
-    border-left: none;
-    border-top: 1px solid var(--line-1);
-  }
-  .mm-stage {
-    min-height: 320px;
-  }
-  .mm-editor__empty {
-    grid-column: 1;
-  }
-}
+/* Every responsive rule lives in styles/mobile.css — the phone layer. */
 
 /* ————— picker: stars, zone badges, attribution ————— */
 /* The thumb became a frame around a button so the star can be its own control —

@@ -8,6 +8,9 @@
   --bg-1: rgba(19, 13, 11, 0.82);
   --bg-2: rgba(32, 22, 18, 0.86);
   --panel: rgba(14, 9, 8, 0.76);
+  /* the one opaque surface: sheets and phone dialogs sit ON the canvas, so
+     they can't be translucent without the meme bleeding through its controls */
+  --sheet: #0d0908;
   --panel-blur: 8px;
   --bg-hover: rgba(255, 255, 255, 0.05);
 
@@ -72,6 +75,16 @@
   /* elevation */
   --shadow-1: 0 8px 32px rgba(0, 0, 0, 0.35);
   --shadow-2: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+  /* the notch tax — zero everywhere but a phone (needs viewport-fit=cover) */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+
+  /* phone chrome heights — the tab bar and the titlebar shrink on small glass */
+  --hud-h: 66px;
+  --tabbar-h: 58px;
 }
 
 /* Derived accent variables live on body — NOT :root — so they compute on the

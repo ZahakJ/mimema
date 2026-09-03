@@ -155,11 +155,15 @@ export function GalleryView() {
             </option>
           ))}
         </select>
-        <button className={`ms-btn${shuffled ? " ms-btn--active" : ""}`} onClick={shuffle}>
-          🎲 shuffle
+        <button
+          className={`ms-btn${shuffled ? " ms-btn--active" : ""}`}
+          onClick={shuffle}
+          title="shuffle what's loaded"
+        >
+          🎲 <span className="mm-wordy">shuffle</span>
         </button>
         <label className="ms-btn" title={verified ? "host any image/gif/video" : "needs the invite key"}>
-          ⇪ upload
+          ⇪ <span className="mm-wordy">upload</span>
           <input
             type="file"
             hidden

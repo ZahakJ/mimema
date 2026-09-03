@@ -20,6 +20,9 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
 
 - `npm run dev:server` + `npm run dev` — dev pair (vite proxies /api,/m,/t → :5900)
 - `npm run typecheck` / `npm test` / `npm run build` / `npm run smoke` — the done bar
+  (smoke loads every route twice: desktop 1440x900 and a touch phone 390x844,
+  drives the phone-only tray → sheet → ship path, and fails if a control lands
+  off-screen)
 - `npm run templates` — idempotently pull the ~290-template pack (imgflip + memegen.link, name-collision deduped, attribution recorded) into `data/`
 - `npm run seed` — import `seed-assets/` as the first wall items (sha-dedup, re-runnable)
 - `npm start` — prod server (reads `.env`, defaults PORT 8001)
@@ -31,6 +34,8 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
   WHITEPAPER.md at repo root is canonical, imported `?raw` + rendered with
   marked, raw-HTML tokenizers disabled), hash routes in `router.ts`
   (`#/`, `#/wall`, `#/add-template`, `#/edit/<templateId>`, `#/paper`).
+  `styles/mobile.css` is the phone layer, `usePhone.ts` its one JS branch,
+  `components/Sheet.tsx` the bottom sheet the rails ride in.
 - `server/` Hono: `app.ts` is listen-free (`createApp(config, db)`) so tests
   drive `app.request()`; `index.ts` binds 127.0.0.1 **and ::1** (cloudflared
   resolves localhost to ::1 first — drop that twin bind and the tunnel 502s).
@@ -70,6 +75,24 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
   upload gets a new slug. Share page `/m/<slug>` (no ext) carries the OG tags.
 - items dedup by sha256 — re-uploading identical bytes returns the existing slug.
 - localStorage keys are namespaced `mimema:v1:*`.
+- **Every responsive rule lives in `client/styles/mobile.css`** — two blocks,
+  deliberately separate: `max-width: 900px` (LAYOUT) and `pointer: coarse`
+  (TOUCH). That 900px is mirrored by `PHONE_QUERY` in `client/usePhone.ts`;
+  change one and you must change the other or the CSS and the JSX disagree
+  about which layout is on screen.
+- Below 900px the forge has no room for three rails: `EditorView` renders the
+  canvas + `.mm-tray` (templates / edit / ship) and moves `TemplatePicker` and
+  `Inspector` into `<Sheet>`s. The nav is rendered twice — titlebar and bottom
+  tab bar — and CSS displays exactly one, so only one is in the a11y tree.
+- The edit sheet is **non-modal on purpose** (`modal={false}`): its scrim is
+  `pointer-events: none`, and `.mm-editor--lifted` shrinks the stage to the gap
+  the sheet leaves, so the canvas above stays visible *and* draggable while you
+  type. Change the sheet's 62dvh cap and you must change that `38dvh` too.
+- `viewport-fit=cover` in index.html is what makes the `--safe-*` tokens
+  non-zero; anything pinned to a screen edge pads with them or lands under the
+  notch. `interactive-widget=resizes-content` keeps sheets above the keyboard.
+- Inputs are forced to 16px under `pointer: coarse` — anything smaller and iOS
+  zooms the whole page the moment a field takes focus.
 - Set `document.body.dataset.appReady = '1'` after first render (smoke waits on it).
 
 ## Deploy

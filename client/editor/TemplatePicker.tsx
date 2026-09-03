@@ -34,9 +34,12 @@ function writeIds(key: string, ids: string[]): void {
 export function TemplatePicker({
   templates,
   loading = false,
+  onPicked,
 }: {
   templates: TemplateDto[]
   loading?: boolean
+  /** the phone renders this rail in a sheet — picking closes it */
+  onPicked?: () => void
 }) {
   const [q, setQ] = useState("")
   const [favorites, setFavorites] = useState<string[]>(() => readIds(FAVORITES_KEY))
@@ -52,8 +55,9 @@ export function TemplatePicker({
         writeIds(RECENT_KEY, next)
         return next
       })
+      onPicked?.()
     },
-    [loadTemplate],
+    [loadTemplate, onPicked],
   )
 
   const toggleFavorite = useCallback((id: string) => {

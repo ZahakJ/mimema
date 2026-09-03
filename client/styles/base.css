@@ -19,6 +19,12 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+  /* phone hygiene: no rotate-to-inflate, no grey flash on tap, and no
+     pull-to-refresh yanking the page out from under a canvas drag */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
 /* the aurora — slow-drifting nebula behind every surface */
@@ -52,8 +58,10 @@ body::before {
   }
 }
 
+/* dvh, not vh — the shrinking URL bar must not push the tab bar off-screen */
 #root {
   height: 100%;
+  height: 100dvh;
 }
 
 ::selection {
@@ -66,6 +74,16 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+}
+
+/* every tappable thing opts out of the double-tap-to-zoom delay */
+button,
+a,
+label,
+select,
+summary,
+[role='button'] {
+  touch-action: manipulation;
 }
 
 a {

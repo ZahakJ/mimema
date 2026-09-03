@@ -238,6 +238,9 @@ export function CanvasStage() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        // a touch that turns into a system gesture (or a call arriving) fires
+        // cancel, never up — without this the layer stays glued to the finger
+        onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
         onDoubleClick={() => {
           const l = doc.layers.find((x) => x.id === useEditor.getState().selectedId)
