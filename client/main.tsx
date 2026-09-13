@@ -13,6 +13,11 @@ import "./styles/mobile.css"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { App } from "./App.tsx"
+import { installAutomation } from "./automation.ts"
+
+// window.__mimema before first paint: a headless caller that loads a deep link
+// and waits for body[data-doc-ready] must find the hook already there.
+installAutomation()
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

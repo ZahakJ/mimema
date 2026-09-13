@@ -15,8 +15,17 @@ import { toast } from "../components/Toasts.tsx"
 /** Which rail the phone has pulled up over the canvas, if any. */
 type PhoneSheet = "templates" | "edit"
 
-export function EditorView({ templateId }: { templateId?: string }) {
+export function EditorView({
+  templateId,
+  captions,
+  title,
+}: {
+  templateId?: string
+  captions?: string[]
+  title?: string
+}) {
   const doc = useEditor((s) => s.doc)
+  const template = useEditor((s) => s.template)
   const selectedId = useEditor((s) => s.selectedId)
   const [templates, setTemplates] = useState<TemplateDto[] | null>(null)
   const restoredRef = useRef(false)
@@ -50,13 +59,61 @@ export function EditorView({ templateId }: { templateId?: string }) {
     })
   }, [])
 
-  // deep link #/edit/<id> (also how the zone editor jumps in)
+  // The deep link is the whole meme: #/edit/<id>?c=…&c=…&title=…
+  // A link is an explicit intent, so its captions overwrite whatever was in
+  // the doc (draft included) — and re-applying is keyed on the captions
+  // themselves, so editing the URL in place re-seeds the canvas.
+  // `linkKey` is also what the docReady gate waits to see applied.
+  const linkKey = JSON.stringify([templateId ?? "", captions ?? [], title ?? ""])
+  const [appliedKey, setAppliedKey] = useState<string | null>(null)
+
   useEffect(() => {
     if (!templates || !templateId) return
-    if (useEditor.getState().doc?.templateId === templateId) return
-    const tpl = templates.find((t) => t.id === templateId)
-    if (tpl) useEditor.getState().loadTemplate(tpl)
-  }, [templates, templateId])
+    const store = useEditor.getState()
+    if (store.doc?.templateId !== templateId) {
+      const tpl = templates.find((t) => t.id === templateId)
+      if (!tpl) return
+      store.loadTemplate(tpl)
+    }
+    if (captions?.length) useEditor.getState().applyCaptions(captions)
+    if (title) useEditor.getState().setTitle(title)
+    setAppliedKey(linkKey)
+    // deps are [templates, linkKey] on purpose: templateId/captions/title are
+    // all folded into linkKey, so a fresh array with the same contents must
+    // not re-seed the canvas out from under an edit
+  }, [templates, linkKey])
+
+  // ————— the automation handshake —————
+  // `data-app-ready` says the app booted; `data-doc-ready` says *this*
+  // template's doc is on the canvas as asked for: built, captioned, with its
+  // base image and every font it uses resident. Headless callers wait for it
+  // before window.__mimema.exportPng().
+  const docTemplateId = doc?.templateId ?? null
+  const imageUrl = template?.imageUrl ?? null
+  const captionsSettled = !templateId || appliedKey === linkKey
+  useEffect(() => {
+    delete document.body.dataset.docReady
+    if (!docTemplateId || !captionsSettled) return
+    if (templateId && docTemplateId !== templateId) return
+    let alive = true
+    const waits: Promise<unknown>[] = fontKey
+      .split("|")
+      .map((f) => document.fonts.load(fontLoadSpec(f as ZoneStyle["fontFamily"])).catch(() => null))
+    if (imageUrl) waits.push(loadImage(imageUrl).catch(() => null))
+    void Promise.all(waits).then(() => {
+      if (alive) document.body.dataset.docReady = docTemplateId
+    })
+    return () => {
+      alive = false
+    }
+  }, [docTemplateId, imageUrl, fontKey, captionsSettled, templateId])
+
+  useEffect(
+    () => () => {
+      delete document.body.dataset.docReady
+    },
+    [],
+  )
 
   // …and only if no deep link claimed the editor: pick the draft back up
   useEffect(() => {
