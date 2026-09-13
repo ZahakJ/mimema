@@ -1,0 +1,50 @@
+[Unit]
+# The relay daemon: a loopback HTTP door (default 127.0.0.1:8006) that takes a
+# chat transcript, runs the /meme skill through `claude -p`, renders the pick in
+# a headless browser, and posts it to the wall. Mimema itself stays AI-free;
+# this unit is the only thing in the suite that talks to a model.
+#
+# Its only client is Binary, the Go Discord bot (~/Documents/side/discord/
+# go_binary): it gathers and formats the transcript and POSTs /forge. Nothing
+# in the app imports relay/.
+#
+# NOT symlinked by default — you need the `claude` CLI logged in and an
+# INVITE_KEY in .env first. See the Relay section of the README for the enable
+# commands.
+PartOf=avicenna-suite.target
+Description=Mimema relay (POST /forge → /meme → the wall)
+Wants=network-online.target
+After=network-online.target meme.service
+# the relay posts to the local API; without the wall there is nothing to ship to
+Requires=meme.service
+
+[Service]
+WorkingDirectory=%h/Documents/side/mimema
+ExecStart=/usr/bin/node --env-file-if-exists=.env relay/serve.ts
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+# `claude` lives in ~/.local/bin, and systemd user units get a bare PATH
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+# Deliberately lighter sandboxing than meme.service: this process forks
+# headless chromium (which wants user namespaces for its own sandbox) and the
+# `claude` CLI (which writes session state under ~/.claude and reads its
+# credentials there). ProtectHome / RestrictNamespaces / a tight syscall filter
+# break both, so they are off on purpose — don't copy them back in from
+# meme.service without testing a real POST /forge end to end.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=-%h/.claude -%h/.claude.json -%h/.cache -%h/.config/claude -%h/.local/share/claude
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+MemoryMax=4G
+TasksMax=512
+
+[Install]
+WantedBy=default.target

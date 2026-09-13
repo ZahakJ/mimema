@@ -9,7 +9,8 @@ server build), `node:sqlite` metadata + blobs on disk under gitignored `data/`.
 
 Ports: dev API **5900**, dev Vite **5901**, smoke/preview **6901**, prod
 **8001** (Cloudflare tunnel `cf-meme` ingress points at 8001 — remotely
-managed in the CF dashboard; keep 8001 or you must edit the dashboard).
+managed in the CF dashboard; keep 8001 or you must edit the dashboard), relay
+daemon **8006** (loopback only; see the Relay section).
 Accent: blood crimson `--accent-rgb: 237, 49, 63` with a flame→gold gradient
 sweep (`--grad`) on obsidian surfaces — "dark and epic". The user explicitly
 vetoed purple, pink, AND acid green; never reintroduce any of them.
@@ -25,6 +26,7 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
   off-screen)
 - `npm run templates` — idempotently pull the ~270-template pack (imgflip + memegen.link, deduped, attribution recorded) into `data/`
 - `npm run templates:dedupe [-- --dry-run]` — prune duplicates an older pull let in (destructive, so it's deliberately not part of `npm run templates`)
+- `npm run templates:layouts [-- --dry-run] [-- --only <id>,…]` — write the curated zones in `scripts/layouts/<id>.json` into the DB (idempotent); proof one with `node tools/render-proof.mjs --out x.png <id> [caption …]` (`--batch ids.txt --outdir dir` for many)
 - `npm run seed` — import `seed-assets/` as the first wall items (sha-dedup, re-runnable)
 - `npm start` — prod server (reads `.env`, defaults PORT 8001)
 
@@ -75,6 +77,11 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
 - Media URLs are immutable (`/m/<slug>.<ext>`, 1y immutable cache); a new
   upload gets a new slug. Share page `/m/<slug>` (no ext) carries the OG tags.
 - items dedup by sha256 — re-uploading identical bytes returns the existing slug.
+- Template zones are curated per template in `scripts/layouts/<id>.json` and
+  applied by `npm run templates:layouts`; the fetch is insert-only for zones so
+  it never overwrites them. A zone's `placeholder` is the zone's *meaning*
+  (never "TOP TEXT") — the forge shows it and the `/meme` skill picks captions
+  by it; `scripts/layouts.ts` is the one loader and it refuses generic ones.
 - Template dedup is **name-based and therefore blind**: the two packs ship the
   same picture under different titles ("Two Buttons"/"Daily Struggle",
   "Bell Curve"/"Midwit"). `scripts/duplicates.ts` is the hand-curated,
@@ -106,6 +113,12 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
 - Inputs are forced to 16px under `pointer: coarse` — anything smaller and iOS
   zooms the whole page the moment a field takes focus.
 - Set `document.body.dataset.appReady = '1'` after first render (smoke waits on it).
+- URL state + headless hooks: `#/edit/<id>?c=..&c=..&title=..` prefills one
+  caption per zone (URL beats a saved draft); `EditorView` sets
+  `body[data-doc-ready=<id>]` only once the doc, captions, base image and every
+  `fontLoadSpec()` face are in; `window.__mimema.exportPng()`
+  (`client/automation.ts`) is the download button's exact path, never a second
+  render. The smoke and `relay/forge.ts` both wait on that attribute.
 
 ## Deploy
 
@@ -113,6 +126,65 @@ systemd user unit lives in `deploy/meme.service`, symlinked from
 `~/.config/systemd/user/` + `avicenna-suite.target.wants/` (leyline pattern).
 `.env` holds `INVITE_KEY` (empty key = publishing disabled). After changing
 client code: `npm run build && systemctl --user restart meme.service`.
+
+## Relay (`relay/`, optional)
+
+A loopback HTTP daemon (`relay/serve.ts`, `npm run relay`), and **the only
+AI-touching thing in the repo** — the app itself stays AI-free, and nothing in
+`client/`, `server/`, `shared/` or `scripts/` imports from `relay/`. Delete the
+directory and Mimema is unchanged.
+
+- **Mimema has no chat surface.** Binary — the user's Go Discord bot at
+  `~/Documents/side/discord/go_binary` — is the only client: it gathers the
+  messages, formats the transcript (`[HH:MM] name: text` lines, plus a
+  `--- request ---\n<hint>` footer) and POSTs it. The relay never reads a chat.
+- Wire (fixed; Binary codes against it): listens on
+  `127.0.0.1:${MEME_RELAY_PORT ?? 8006}`, **and `::1`** — same twin bind as
+  `server/index.ts`, so a client that resolves `localhost` to IPv6 first still
+  lands. `GET /healthz` → `ok`. `POST /forge`
+  `{context, source?, chatId?}` (body capped at 256 KB) →
+  **200** `{slug, url, shareUrl, templateId, captions, title}` (absolute urls,
+  no PNG bytes — Binary fetches the image from `url`), **400** bad JSON / empty
+  context / oversized body, **429** `{error: "cooling down" | "queue full",
+  retryAfterMs}`, **500** `{error: <one line>}` with the full error logged.
+  Nothing else, and **no auth**: the socket is loopback-only and `INVITE_KEY`
+  lives in the daemon's env, never in the request. Don't bind a routable
+  address, don't add a token.
+- `source` (e.g. `discord`) becomes a second tag next to `relay` on the wall
+  item — lowercased and accepted only as `[a-z0-9-]{1,32}`, else dropped: it is
+  caller-supplied text landing on a public page.
+- `createHandler({ forge })` takes an injected forge, which is how
+  `relay/serve.test.ts` covers the whole wire without a model call or a browser.
+- Pipe: transcript → temp file (mkdtemp, removed in `finally`; other people's
+  chat never lingers on disk) →
+  `claude -p "/meme --json <file>" --output-format json --permission-prompts none
+  --allowedTools "Bash(curl:*)" "Bash(python3:*)" Read` with **cwd = repo root**
+  (the slash form is what loads `.claude/skills/meme/SKILL.md`; run it anywhere
+  else and the skill doesn't exist) → zod-validate
+  `{templateId, captions, title, alt}` → render → `POST /api/items`.
+- **The relay never reimplements the render.** It drives the real page:
+  `#/edit/<id>?c=…&c=…&title=…`, waits for `body[data-doc-ready="<id>"]`, calls
+  `window.__mimema.exportPng()`. That URL/hook contract is the client's half —
+  change it there and `relay/forge.ts` must change with it. Captions are one `c`
+  per zone in zone order, spaces as `%20` (never `+`).
+- `pickMeme()` takes an injectable `ClaudeRunner`, which is why forge is
+  testable without spending a model call. `npm run relay:forge -- ctx.txt
+  --dry-run` stops after the pick — the cheap e2e for the AI half.
+- Playwright chromium is a **runtime** dependency here, not just the smoke
+  test's: one lazy browser singleton per process. SIGTERM/SIGINT closes the
+  listeners first, then the browser, then exits.
+- `shareUrl`/`url` come back relative from the API (store.ts builds them that
+  way; `PUBLIC_ORIGIN` only reaches the OG tags), so the relay absolutizes with
+  `MEME_PUBLIC_ORIGIN`.
+- Guards are cost guards, not an allowlist — anyone in the room may trigger it:
+  `relay/gate.ts` keys a 30s cooldown by the caller's `chatId` (`"anon"` when
+  Binary omits it), runs one forge at a time, five waiting max. Every admitted
+  request must go through `gate.run()` or the queue slot leaks.
+- `deploy/meme-relay.service` is deliberately **not** symlinked (needs a
+  logged-in `claude` and an `INVITE_KEY` first) and deliberately less sandboxed
+  than `meme.service`: chromium
+  wants user namespaces and `claude` writes under `~/.claude`, so `ProtectHome`,
+  `RestrictNamespaces` and the syscall filter are off on purpose.
 
 Done bar: `npm run typecheck && npm test && npm run build && npm run smoke`
 all green, plus `curl http://127.0.0.1:8001/healthz` **and**

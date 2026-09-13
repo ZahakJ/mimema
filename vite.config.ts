@@ -31,6 +31,7 @@ export default defineConfig({
       "../shared/**/*.test.ts",
       "../client/**/*.test.ts",
       "../scripts/**/*.test.ts",
+      "../relay/**/*.test.ts",
     ],
   },
 })

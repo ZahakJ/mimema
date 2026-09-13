@@ -156,6 +156,126 @@ perfectly well with no public exposure at all: point `PUBLIC_ORIGIN` at a LAN
 address and you have a meme forge for one household, one office, or one very
 committed individual.
 
+## Relay (the only AI in the building)
+
+Mimema has no AI: no model runs when you forge a meme, browse the wall, or cut
+a template. The optional **relay** in [`relay/`](relay/) is the exception, and
+it is deliberately a dumb pipe sitting *outside* the app — a small HTTP daemon
+on loopback that takes a chat transcript and gives back a meme:
+
+1. something hands it a formatted transcript over `POST /forge`,
+2. it shells out to headless Claude Code — `claude -p "/meme --json <file>"`,
+   which runs [the repo's `/meme` skill](.claude/skills/meme/SKILL.md) — and
+   gets back `{templateId, captions, title, alt}`,
+3. it renders that **through the app itself**: a headless Chromium opens
+   `#/edit/<id>?c=…&c=…` and calls the page's own export, so a relayed meme and
+   a hand-made one come out of the same `renderMeme`,
+4. it POSTs the PNG to `/api/items` with your `INVITE_KEY`, tagged `relay`, and
+   answers with the slug and the share link.
+
+Mimema has no chat surface of its own, on purpose. The only client here is
+**Binary**, the author's Go Discord bot (`~/Documents/side/discord/go_binary`):
+Binary watches the room, formats the transcript, and POSTs it. Swapping Discord
+for anything else means writing a different client, not touching this repo.
+
+Nothing else in the codebase imports anything from `relay/`. Delete the
+directory and Mimema is unchanged.
+
+### The wire
+
+The daemon listens on `127.0.0.1` **and `::1`** — loopback only, because there
+is **no auth on it**: `INVITE_KEY` lives in the daemon's environment and never
+travels in a request. Do not put it on a routable address or behind a tunnel.
+
+| Route | Body | Answer |
+| --- | --- | --- |
+| `GET /healthz` | — | `ok` |
+| `POST /forge` | `{"context": string, "source"?: string, "chatId"?: string}`, max 256 KB | `200 {slug, url, shareUrl, templateId, captions, title}` |
+
+`context` is the whole transcript, already formatted by the caller — one
+`[HH:MM] name: text` line per message, optionally followed by
+`--- request ---` and a steer ("make it hurt", "drake only"). `source`
+(`discord`) becomes a second tag next to `relay` on the wall item; it is
+lowercased and kept only if it is `[a-z0-9-]`, otherwise dropped. `chatId` is
+what the cooldown is keyed by — one room cannot starve another — and defaults
+to `anon`.
+
+The failures are just as fixed: **400** for malformed JSON, an empty `context`
+or a body over the cap, **429** `{error: "cooling down" | "queue full",
+retryAfterMs}`, **500** `{error: "<one line>"}` with the full stack in the
+journal. Nothing else.
+
+### Setup
+
+The relay needs the Claude Code CLI on `PATH` and logged in, Playwright's
+Chromium (`npx playwright install chromium`), and an `INVITE_KEY` — it
+publishes through the public API like any other client.
+
+**1. Fill in `.env`** (see `.env.example` for the full list):
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `INVITE_KEY` | *(empty)* | Same key the wall uses. Without it the relay can pick and render but not publish. |
+| `MEME_RELAY_PORT` | `8006` | Loopback port the daemon listens on. |
+| `MEME_ORIGIN` | `http://127.0.0.1:8001` | Where the relay reads the catalog and posts the meme. |
+| `MEME_PUBLIC_ORIGIN` | `https://meme.avicenna.space` | Only used to absolutize the relative `url`/`shareUrl` the API returns, for the chat link. |
+| `MEME_RELAY_MODEL` | `sonnet` | Passed to `claude --model`. Anyone in the room can trigger a forge, so the default is the cheap model; a bigger one costs ~10x per meme. |
+| `MEME_RELAY_COOLDOWN_MS` | `30000` | Cooldown between forges per `chatId`. |
+
+**2. Test the AI half without spending a browser** — write a few fake chat lines
+to a file and dry-run the picker:
+
+```sh
+npm run relay:forge -- some-context.txt --dry-run
+# {"templateId":"panik-kalm-panik","captions":[...],"title":"Define backups","alt":"gru-s-plan"}
+```
+
+Drop `--dry-run` and the same command renders and publishes for real.
+
+**3. Run it.**
+
+```sh
+npm run relay            # foreground
+
+# or as a systemd user unit, next to the server (same symlink pattern as
+# deploy/meme.service — the unit is deliberately not enabled by default):
+ln -s "$PWD/deploy/meme-relay.service" ~/.config/systemd/user/meme-relay.service
+systemctl --user daemon-reload
+systemctl --user enable --now meme-relay.service
+journalctl --user -u meme-relay.service -f
+
+# if you run the avicenna-suite target, hang it off that instead of default:
+ln -s ../meme-relay.service \
+  ~/.config/systemd/user/avicenna-suite.target.wants/meme-relay.service
+```
+
+**4. Check it.**
+
+```sh
+curl -s localhost:8006/healthz          # → ok
+
+curl -s localhost:8006/forge \
+  -H 'content-type: application/json' \
+  -d '{
+        "source": "discord",
+        "chatId": "123456789",
+        "context": "[09:02] dana: the migration finished\n[09:03] sam: against staging?\n--- request ---\nmake it hurt"
+      }'
+# {"slug":"k3f9…","url":"https://…/m/k3f9….png","shareUrl":"https://…/m/k3f9…",
+#  "templateId":"panik-kalm-panik","captions":["…"],"title":"Define backups"}
+```
+
+That takes as long as a model call plus a browser render — tens of seconds, not
+milliseconds. Your client should say something in the room before it waits.
+
+### Guards
+
+Anyone in the room may trigger it — there is no allowlist, because the room is
+the allowlist. The guards are about cost, not permission: one forge per
+`chatId` per 30 seconds, one running at a time, at most five waiting, and
+anything past that gets a `429`. There is no state on disk: the transcript goes
+to a temp file for the length of one forge and is deleted in a `finally`.
+
 ## Whitepaper
 
 There is a whitepaper: [WHITEPAPER.md](WHITEPAPER.md), also served in-app under
