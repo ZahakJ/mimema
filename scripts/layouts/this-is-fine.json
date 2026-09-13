@@ -1,0 +1,29 @@
+{
+  "id": "this-is-fine",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.04,
+      "w": 0.44,
+      "h": 0.18,
+      "align": "center",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.09
+      },
+      "placeholder": "THE SITUATION ON FIRE"
+    },
+    {
+      "x": 0.52,
+      "y": 0.76,
+      "w": 0.45,
+      "h": 0.2,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.09
+      },
+      "placeholder": "WHO SAYS IT'S FINE"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "spiderman-pointing-at-spiderman",
+  "zones": [
+    {
+      "x": 0.14,
+      "y": 0.6,
+      "w": 0.26,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.07
+      },
+      "placeholder": "ONE OF THEM"
+    },
+    {
+      "x": 0.6,
+      "y": 0.6,
+      "w": 0.28,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.07
+      },
+      "placeholder": "THE OTHER ONE"
+    }
+  ]
+}

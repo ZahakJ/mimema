@@ -1,0 +1,35 @@
+{
+  "id": "is-this-a-pigeon",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.02,
+      "w": 0.42,
+      "h": 0.14,
+      "align": "left",
+      "valign": "top",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "WHO'S CONFUSED"
+    },
+    {
+      "x": 0.60,
+      "y": 0.37,
+      "w": 0.38,
+      "h": 0.14,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "THE THING THEY'RE LOOKING AT"
+    },
+    {
+      "x": 0.05,
+      "y": 0.85,
+      "w": 0.90,
+      "h": 0.13,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.065 },
+      "placeholder": "THE WRONG NAME FOR IT"
+    }
+  ]
+}

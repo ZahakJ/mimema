@@ -1,0 +1,25 @@
+{
+  "id": "push-it-somewhere-else-patrick",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.94,
+      "h": 0.11,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE THING TO MOVE"
+    },
+    {
+      "x": 0.03,
+      "y": 0.52,
+      "w": 0.94,
+      "h": 0.11,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "WHERE IT SHOULD GO"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "bell-curve",
+  "zones": [
+    {
+      "x": 0.015,
+      "y": 0.18,
+      "w": 0.3,
+      "h": 0.32,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.055,
+        "fill": "#000000",
+        "stroke": "#ffffff"
+      },
+      "placeholder": "THE DUMB TAKE"
+    },
+    {
+      "x": 0.28,
+      "y": 0.47,
+      "w": 0.44,
+      "h": 0.22,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.05
+      },
+      "placeholder": "THE MIDWIT TAKE"
+    },
+    {
+      "x": 0.63,
+      "y": 0.08,
+      "w": 0.35,
+      "h": 0.34,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.055,
+        "fill": "#000000",
+        "stroke": "#ffffff"
+      },
+      "placeholder": "THE GENIUS TAKE"
+    }
+  ]
+}

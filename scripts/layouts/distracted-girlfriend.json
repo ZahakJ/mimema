@@ -1,0 +1,41 @@
+{
+  "id": "distracted-girlfriend",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.78,
+      "w": 0.33,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.075
+      },
+      "placeholder": "NEW TEMPTATION"
+    },
+    {
+      "x": 0.4,
+      "y": 0.78,
+      "w": 0.29,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.075
+      },
+      "placeholder": "THE GIRL"
+    },
+    {
+      "x": 0.71,
+      "y": 0.78,
+      "w": 0.27,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.075
+      },
+      "placeholder": "NEGLECTED PARTNER"
+    }
+  ]
+}

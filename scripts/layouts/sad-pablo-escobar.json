@@ -1,0 +1,41 @@
+{
+  "id": "sad-pablo-escobar",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.33,
+      "w": 0.94,
+      "h": 0.14,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "WHAT YOU'RE WAITING FOR"
+    },
+    {
+      "x": 0.02,
+      "y": 0.84,
+      "w": 0.46,
+      "h": 0.13,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "HOW LONG IT'S BEEN"
+    },
+    {
+      "x": 0.52,
+      "y": 0.84,
+      "w": 0.46,
+      "h": 0.13,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "STILL NOTHING"
+    }
+  ]
+}

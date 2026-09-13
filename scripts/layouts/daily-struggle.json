@@ -1,0 +1,47 @@
+{
+  "id": "daily-struggle",
+  "zones": [
+    {
+      "x": 0.09,
+      "y": 0.135,
+      "w": 0.3,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "angle": -9,
+      "style": {
+        "fontFrac": 0.033,
+        "fill": "#000000",
+        "stroke": "#ffffff"
+      },
+      "placeholder": "BUTTON 1"
+    },
+    {
+      "x": 0.465,
+      "y": 0.075,
+      "w": 0.3,
+      "h": 0.145,
+      "align": "center",
+      "valign": "middle",
+      "angle": -9,
+      "style": {
+        "fontFrac": 0.033,
+        "fill": "#000000",
+        "stroke": "#ffffff"
+      },
+      "placeholder": "BUTTON 2"
+    },
+    {
+      "x": 0.03,
+      "y": 0.88,
+      "w": 0.94,
+      "h": 0.1,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.05
+      },
+      "placeholder": "WHO'S SWEATING"
+    }
+  ]
+}

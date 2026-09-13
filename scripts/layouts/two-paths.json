@@ -1,0 +1,41 @@
+{
+  "id": "two-paths",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.31,
+      "w": 0.32,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.065
+      },
+      "placeholder": "THE BRIGHT PATH"
+    },
+    {
+      "x": 0.66,
+      "y": 0.31,
+      "w": 0.32,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.065
+      },
+      "placeholder": "THE DARK PATH"
+    },
+    {
+      "x": 0.03,
+      "y": 0.87,
+      "w": 0.94,
+      "h": 0.11,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.065
+      },
+      "placeholder": "WHO HAS TO CHOOSE"
+    }
+  ]
+}

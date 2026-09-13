@@ -1,0 +1,65 @@
+{
+  "id": "patrick-star-s-wallet",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.18,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE FIRST QUESTION"
+    },
+    {
+      "x": 0.52,
+      "y": 0.18,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE FIRST DENIAL"
+    },
+    {
+      "x": 0.02,
+      "y": 0.425,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE FOLLOW-UP QUESTION"
+    },
+    {
+      "x": 0.52,
+      "y": 0.425,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE ADMISSION"
+    },
+    {
+      "x": 0.02,
+      "y": 0.67,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE CONCLUSION DRAWN"
+    },
+    {
+      "x": 0.52,
+      "y": 0.67,
+      "w": 0.46,
+      "h": 0.055,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.03 },
+      "placeholder": "THE FINAL DENIAL"
+    }
+  ]
+}

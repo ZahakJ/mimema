@@ -1,0 +1,77 @@
+{
+  "id": "stop-it-patrick-you-re-scaring-him",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.22,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "FIRST HARSH TRUTH"
+    },
+    {
+      "x": 0.53,
+      "y": 0.22,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "THE COLD STARE"
+    },
+    {
+      "x": 0.02,
+      "y": 0.555,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "SECOND HARSH TRUTH"
+    },
+    {
+      "x": 0.53,
+      "y": 0.555,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "STILL STARING"
+    },
+    {
+      "x": 0.02,
+      "y": 0.885,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "THE FINAL BLOW"
+    },
+    {
+      "x": 0.53,
+      "y": 0.885,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "WHO'S SCARED NOW"
+    }
+  ]
+}

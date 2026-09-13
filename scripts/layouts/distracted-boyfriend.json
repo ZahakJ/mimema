@@ -1,0 +1,41 @@
+{
+  "id": "distracted-boyfriend",
+  "zones": [
+    {
+      "x": 0.08,
+      "y": 0.79,
+      "w": 0.34,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "NEW TEMPTATION"
+    },
+    {
+      "x": 0.45,
+      "y": 0.79,
+      "w": 0.3,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "THE GUY"
+    },
+    {
+      "x": 0.76,
+      "y": 0.79,
+      "w": 0.23,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "NEGLECTED PARTNER"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "left-exit-12-off-ramp",
+  "zones": [
+    {
+      "x": 0.245,
+      "y": 0.135,
+      "w": 0.145,
+      "h": 0.19,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "THE SENSIBLE ROUTE"
+    },
+    {
+      "x": 0.525,
+      "y": 0.135,
+      "w": 0.195,
+      "h": 0.19,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "THE TEMPTING EXIT"
+    },
+    {
+      "x": 0.05,
+      "y": 0.85,
+      "w": 0.90,
+      "h": 0.12,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "WHO'S SWERVING"
+    }
+  ]
+}
