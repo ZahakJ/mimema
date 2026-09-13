@@ -15,7 +15,10 @@
     "smoke": "node tools/screenshot.mjs",
     "templates": "node --env-file-if-exists=.env scripts/fetch-templates.ts",
     "templates:dedupe": "node --env-file-if-exists=.env scripts/dedupe-templates.ts",
-    "seed": "node --env-file-if-exists=.env scripts/seed.ts"
+    "templates:layouts": "node --env-file-if-exists=.env scripts/apply-layouts.ts",
+    "seed": "node --env-file-if-exists=.env scripts/seed.ts",
+    "relay": "node --env-file-if-exists=.env relay/serve.ts",
+    "relay:forge": "node --env-file-if-exists=.env relay/cli.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.5",
