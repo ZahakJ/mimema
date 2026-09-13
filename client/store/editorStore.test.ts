@@ -95,6 +95,69 @@ describe("editor store", () => {
   })
 })
 
+// the deep link #/edit/<id>?c=…&c=… lands here
+describe("applyCaptions", () => {
+  const TPL3: TemplateDto = {
+    ...TPL,
+    id: "three",
+    zones: [0, 1, 2].map((i) => ({
+      x: 0.1,
+      y: 0.1 + i * 0.25,
+      w: 0.5,
+      h: 0.2,
+      align: "center" as const,
+      valign: "middle" as const,
+      angle: 0,
+      style: DEFAULT_ZONE_STYLE,
+      placeholder: `zone ${i}`,
+    })),
+  }
+  const texts = () => useEditor.getState().doc!.layers.map((l) => (l.type === "text" ? l.text : "·"))
+
+  beforeEach(() => useEditor.getState().loadTemplate(TPL3))
+
+  it("fills the text layers in zone order", () => {
+    useEditor.getState().applyCaptions(["one", "two", "three"])
+    expect(texts()).toEqual(["one", "two", "three"])
+  })
+
+  it("leaves zones past the end of the list alone, and drops extras", () => {
+    useEditor.getState().applyCaptions(["only"])
+    expect(texts()).toEqual(["only", "", ""])
+    useEditor.getState().applyCaptions(["a", "b", "c", "d", "e"])
+    expect(texts()).toEqual(["a", "b", "c"])
+  })
+
+  it("an empty caption is an empty zone, not a skipped one", () => {
+    useEditor.getState().applyCaptions(["", "second"])
+    expect(texts()).toEqual(["", "second", ""])
+  })
+
+  it("beats whatever the doc already had — a link is an explicit intent", () => {
+    useEditor.getState().applyCaptions(["stale", "stale", "stale"])
+    useEditor.getState().applyCaptions(["fresh"])
+    expect(texts()).toEqual(["fresh", "stale", "stale"])
+  })
+
+  it("counts text layers only — a sticker never eats a caption", () => {
+    useEditor.getState().addSticker("data:image/png;base64,AA==", 1)
+    useEditor.getState().applyCaptions(["one", "two", "three", "four"])
+    expect(texts()).toEqual(["one", "two", "three", "·"])
+  })
+
+  it("is part of opening the doc, so it leaves no undo step", () => {
+    useEditor.getState().applyCaptions(["one"])
+    expect(useEditor.getState().past).toHaveLength(0)
+  })
+
+  it("carries ?title= for the ship dialog, and a new template clears it", () => {
+    useEditor.getState().setTitle("Deep-linked")
+    expect(useEditor.getState().title).toBe("Deep-linked")
+    useEditor.getState().loadTemplate(TPL)
+    expect(useEditor.getState().title).toBe("")
+  })
+})
+
 describe("draft partialize", () => {
   beforeEach(() => useEditor.getState().loadTemplate(TPL))
 

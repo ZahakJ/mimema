@@ -54,6 +54,7 @@ try {
     headers: { "x-meme-key": KEY },
   })
   if (tplRes.status !== 201) throw new Error(`template seed failed: ${tplRes.status}`)
+  const template = await tplRes.json()
 
   const itemForm = new FormData()
   itemForm.set("file", new File([png], "smoke.png"))
@@ -93,6 +94,20 @@ try {
     await page.screenshot({ path: join(ROOT, "screenshots", `${name}.png`) })
     console.log(`  ✓ ${name}`)
   }
+
+  // ————— the deep link + automation hook (desktop only) —————
+  // A URL carries the whole meme; body[data-doc-ready] says the doc is on the
+  // canvas, captions and all; window.__mimema.exportPng() is the download
+  // button's own render path, handed back as a data URL.
+  const deepLink = `/#/edit/${template.id}?c=hello&c=world&title=Deep%20Link`
+  await page.goto(`${ORIGIN}${deepLink}`, { waitUntil: "networkidle" })
+  await page.waitForSelector(`body[data-doc-ready="${template.id}"]`, { timeout: 10000 })
+  const dataUrl = await page.evaluate(() => window.__mimema.exportPng())
+  if (!dataUrl.startsWith("data:image/png"))
+    throw new Error(`exportPng() gave back ${dataUrl.slice(0, 32)}…`)
+  if (dataUrl.length < 1000) throw new Error(`exportPng() gave back ${dataUrl.length} chars`)
+  await page.screenshot({ path: join(ROOT, "screenshots", "deep-link.png") })
+  console.log("  ✓ deep link → doc-ready → exportPng")
 
   // share page is server-rendered — no app-ready marker
   await page.goto(`${ORIGIN}${item.shareUrl}`, { waitUntil: "networkidle" })

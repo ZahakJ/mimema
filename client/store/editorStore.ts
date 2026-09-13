@@ -67,6 +67,8 @@ function writeStore(key: string, value: string | null): void {
 type EditorState = {
   template: TemplateDto | null
   doc: MemeDoc | null
+  /** seeded from ?title= in a deep link; PublishDialog opens with it */
+  title: string
   selectedId: string | null
   past: MemeDoc[]
   future: MemeDoc[]
@@ -75,6 +77,8 @@ type EditorState = {
 
   bumpFontEpoch: () => void
   loadTemplate: (tpl: TemplateDto) => void
+  applyCaptions: (captions: readonly string[]) => void
+  setTitle: (title: string) => void
   restoreDraft: (templates: readonly TemplateDto[]) => boolean
   select: (id: string | null) => void
   beginGesture: () => void
@@ -125,6 +129,7 @@ export const useEditor = create<EditorState>((set, get) => {
   return {
     template: null,
     doc: null,
+    title: "",
     selectedId: null,
     past: [],
     future: [],
@@ -136,6 +141,8 @@ export const useEditor = create<EditorState>((set, get) => {
       const layers = tpl.zones.map(textLayerFromZone)
       set({
         template: tpl,
+        // a new template is a new meme — a title from an older link is stale
+        title: "",
         doc: {
           templateId: tpl.id,
           width: tpl.width,
@@ -148,6 +155,24 @@ export const useEditor = create<EditorState>((set, get) => {
         future: [],
       })
     },
+
+    /** Fill the text layers from a deep link's ?c= list, in zone order (the
+     *  order loadTemplate created them in). Short list → the rest keep what
+     *  they have; extras are dropped. Not undoable on purpose: this is part of
+     *  opening the doc, like loadTemplate, not an edit you made. */
+    applyCaptions: (captions) => {
+      let i = 0
+      patchDoc((doc) => ({
+        ...doc,
+        layers: doc.layers.map((l) => {
+          if (l.type !== "text") return l
+          const text = captions[i++]
+          return text === undefined ? l : { ...l, text }
+        }),
+      }))
+    },
+
+    setTitle: (title) => set({ title }),
 
     /** Rehydrate the saved draft. Callers must have decided the deep link
      *  doesn't win — #/edit/<id> always beats whatever was left lying around. */

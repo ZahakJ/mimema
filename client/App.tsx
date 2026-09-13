@@ -64,7 +64,13 @@ export function App() {
         <InviteKeyButton />
       </header>
       <main className="ms-hud__main">
-        {route.view === "editor" && <EditorView templateId={route.templateId} />}
+        {route.view === "editor" && (
+          <EditorView
+            templateId={route.templateId}
+            captions={route.captions}
+            title={route.title}
+          />
+        )}
         {route.view === "wall" && <GalleryView />}
         {route.view === "add-template" && <ZoneEditorView />}
         {route.view === "paper" && <PaperView />}

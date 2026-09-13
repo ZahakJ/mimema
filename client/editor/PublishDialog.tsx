@@ -13,7 +13,9 @@ export function PublishDialog({ onClose }: { onClose: () => void }) {
   const doc = useEditor((s) => s.doc)
   const template = useEditor((s) => s.template)
   const verified = useAuth((s) => s.verified)
-  const [title, setTitle] = useState("")
+  // a #/edit/…&title= link opens the ship dialog with the title already in it
+  const linkTitle = useEditor((s) => s.title)
+  const [title, setTitle] = useState(linkTitle)
   const [tags, setTags] = useState<string[]>([])
   const [busy, setBusy] = useState<"download" | "copy" | "share" | "publish" | null>(null)
   const [published, setPublished] = useState<ItemDto | null>(null)
