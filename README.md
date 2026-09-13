@@ -220,7 +220,7 @@ publishes through the public API like any other client.
 | `MEME_ORIGIN` | `http://127.0.0.1:8001` | Where the relay reads the catalog and posts the meme. |
 | `MEME_PUBLIC_ORIGIN` | `https://meme.avicenna.space` | Only used to absolutize the relative `url`/`shareUrl` the API returns, for the chat link. |
 | `MEME_RELAY_MODEL` | `sonnet` | Passed to `claude --model`. Anyone in the room can trigger a forge, so the default is the cheap model; a bigger one costs ~10x per meme. |
-| `MEME_RELAY_COOLDOWN_MS` | `30000` | Cooldown between forges per `chatId`. |
+| `MEME_RELAY_COOLDOWN_MS` | `0` (off) | Optional per-`chatId` backstop. Who may forge and how often is Binary's job (per-user cooldown + daily cap, owners exempt); the daemon only serializes forges. |
 
 **2. Test the AI half without spending a browser** — write a few fake chat lines
 to a file and dry-run the picker:

@@ -176,10 +176,12 @@ directory and Mimema is unchanged.
 - `shareUrl`/`url` come back relative from the API (store.ts builds them that
   way; `PUBLIC_ORIGIN` only reaches the OG tags), so the relay absolutizes with
   `MEME_PUBLIC_ORIGIN`.
-- Guards are cost guards, not an allowlist — anyone in the room may trigger it:
-  `relay/gate.ts` keys a 30s cooldown by the caller's `chatId` (`"anon"` when
-  Binary omits it), runs one forge at a time, five waiting max. Every admitted
-  request must go through `gate.run()` or the queue slot leaks.
+- Usage policy lives in the client, not the daemon: Binary enforces a per-user
+  cooldown + daily cap with owners exempt (it knows Discord users; the daemon
+  only sees a chatId). The daemon keeps one forge at a time, five waiting
+  (`relay/gate.ts`); its per-chat cooldown is off unless `MEME_RELAY_COOLDOWN_MS`
+  sets a backstop. Every admitted request must go through `gate.run()` or the
+  queue slot leaks.
 - `deploy/meme-relay.service` is deliberately **not** symlinked (needs a
   logged-in `claude` and an `INVITE_KEY` first) and deliberately less sandboxed
   than `meme.service`: chromium

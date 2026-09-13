@@ -111,7 +111,11 @@ function send(res: http.ServerResponse, status: number, body: unknown, headers: 
 export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
   const forge = deps.forge ?? realForge
   const gate =
-    deps.gate ?? new Gate({ cooldownMs: Number(process.env.MEME_RELAY_COOLDOWN_MS) || undefined })
+    // Who may forge and how often is the client's call (Binary knows Discord users
+    // and owners; the daemon only sees a chatId). The daemon's per-chat cooldown
+    // is therefore off unless MEME_RELAY_COOLDOWN_MS asks for a backstop; the
+    // one-at-a-time queue is the resource guard and always stays.
+    deps.gate ?? new Gate({ cooldownMs: Number(process.env.MEME_RELAY_COOLDOWN_MS) || 0 })
 
   return (req, res) => {
     void handle(req, res).catch((err) => {
