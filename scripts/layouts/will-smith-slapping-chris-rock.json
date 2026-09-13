@@ -1,0 +1,29 @@
+{
+  "id": "will-smith-slapping-chris-rock",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.74,
+      "w": 0.33,
+      "h": 0.22,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.07
+      },
+      "placeholder": "WHO GETS SLAPPED"
+    },
+    {
+      "x": 0.64,
+      "y": 0.74,
+      "w": 0.34,
+      "h": 0.22,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.07
+      },
+      "placeholder": "WHO DOES THE SLAPPING"
+    }
+  ]
+}

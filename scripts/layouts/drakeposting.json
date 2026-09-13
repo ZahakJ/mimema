@@ -1,0 +1,29 @@
+{
+  "id": "drakeposting",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.33,
+      "w": 0.94,
+      "h": 0.14,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "REJECTED THING"
+    },
+    {
+      "x": 0.03,
+      "y": 0.84,
+      "w": 0.94,
+      "h": 0.14,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "PREFERRED THING"
+    }
+  ]
+}

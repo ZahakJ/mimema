@@ -1,0 +1,25 @@
+{
+  "id": "i-bet-he-s-thinking-about-other-women",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.70,
+      "w": 0.44,
+      "h": 0.26,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.07, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT SHE THINKS HE'S THINKING"
+    },
+    {
+      "x": 0.54,
+      "y": 0.03,
+      "w": 0.44,
+      "h": 0.15,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.07, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT HE'S ACTUALLY THINKING"
+    }
+  ]
+}

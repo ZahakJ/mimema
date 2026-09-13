@@ -10,6 +10,11 @@
 // The packs overlap: ids that are the same picture under a different title are
 // refused here from duplicates.ts, and `npm run templates:dedupe` prunes any
 // an older run let through.
+//
+// Insert-only where zones are concerned: an existing template is skipped whole
+// (only its missing attribution is ever backfilled), so the curated boxes in
+// scripts/layouts/ survive every re-pull. defaultZones() below is the guess a
+// template arrives with and `npm run templates:layouts` is what replaces it.
 //   npm run templates
 import path from "node:path"
 import { loadConfig } from "../server/config.ts"

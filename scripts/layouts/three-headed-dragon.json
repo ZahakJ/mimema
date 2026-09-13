@@ -1,0 +1,53 @@
+{
+  "id": "three-headed-dragon",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.015,
+      "w": 0.94,
+      "h": 0.09,
+      "align": "center",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "WHAT THEY'RE ALL FACING"
+    },
+    {
+      "x": 0.02,
+      "y": 0.62,
+      "w": 0.27,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "THE STERN ONE"
+    },
+    {
+      "x": 0.36,
+      "y": 0.62,
+      "w": 0.28,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "THE FURIOUS ONE"
+    },
+    {
+      "x": 0.69,
+      "y": 0.68,
+      "w": 0.29,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "THE DERP ONE"
+    }
+  ]
+}

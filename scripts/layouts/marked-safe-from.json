@@ -1,0 +1,25 @@
+{
+  "id": "marked-safe-from",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.52,
+      "w": 0.92,
+      "h": 0.17,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.09, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE THING YOU SURVIVED"
+    },
+    {
+      "x": 0.04,
+      "y": 0.84,
+      "w": 0.92,
+      "h": 0.13,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO'S MARKED SAFE"
+    }
+  ]
+}

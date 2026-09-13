@@ -1,0 +1,31 @@
+{
+  "id": "doge",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.04,
+      "w": 0.34,
+      "h": 0.12,
+      "align": "left",
+      "valign": "top",
+      "angle": -6,
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "SUCH NOUN"
+    },
+    {
+      "x": 0.58,
+      "y": 0.82,
+      "w": 0.39,
+      "h": 0.12,
+      "align": "right",
+      "valign": "bottom",
+      "angle": 5,
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "VERY ADJECTIVE"
+    }
+  ]
+}

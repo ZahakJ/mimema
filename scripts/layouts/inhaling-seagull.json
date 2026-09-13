@@ -1,0 +1,45 @@
+{
+  "id": "inhaling-seagull",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.012,
+      "w": 0.94,
+      "h": 0.065,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.028 },
+      "placeholder": "THE SETUP"
+    },
+    {
+      "x": 0.03,
+      "y": 0.255,
+      "w": 0.94,
+      "h": 0.05,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.028 },
+      "placeholder": "THE RANT BEGINS"
+    },
+    {
+      "x": 0.03,
+      "y": 0.505,
+      "w": 0.94,
+      "h": 0.065,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.028 },
+      "placeholder": "STILL GOING"
+    },
+    {
+      "x": 0.03,
+      "y": 0.755,
+      "w": 0.94,
+      "h": 0.065,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.028 },
+      "placeholder": "THE FINAL SCREAM"
+    }
+  ]
+}

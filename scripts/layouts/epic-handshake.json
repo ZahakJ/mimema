@@ -1,0 +1,41 @@
+{
+  "id": "epic-handshake",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.03,
+      "w": 0.26,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "FIRST SIDE"
+    },
+    {
+      "x": 0.6,
+      "y": 0.03,
+      "w": 0.38,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "SECOND SIDE"
+    },
+    {
+      "x": 0.29,
+      "y": 0.79,
+      "w": 0.44,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.06
+      },
+      "placeholder": "WHAT THEY AGREE ON"
+    }
+  ]
+}

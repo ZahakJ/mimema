@@ -1,0 +1,25 @@
+{
+  "id": "hide-the-pain-harold",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.03,
+      "w": 0.50,
+      "h": 0.18,
+      "align": "left",
+      "valign": "top",
+      "style": { "fontFrac": 0.05, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE CHEERFUL CLAIM"
+    },
+    {
+      "x": 0.03,
+      "y": 0.53,
+      "w": 0.50,
+      "h": 0.18,
+      "align": "left",
+      "valign": "top",
+      "style": { "fontFrac": 0.05, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE PAIN UNDERNEATH"
+    }
+  ]
+}

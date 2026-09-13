@@ -1,0 +1,65 @@
+{
+  "id": "running-away-balloon",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.38,
+      "h": 0.1,
+      "align": "left",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "THE PERSON"
+    },
+    {
+      "x": 0.6,
+      "y": 0.05,
+      "w": 0.37,
+      "h": 0.24,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "WHAT THEY WANT"
+    },
+    {
+      "x": 0.02,
+      "y": 0.76,
+      "w": 0.28,
+      "h": 0.2,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "WHAT GRABS THEM"
+    },
+    {
+      "x": 0.31,
+      "y": 0.52,
+      "w": 0.3,
+      "h": 0.1,
+      "align": "center",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "THE PERSON, TRAPPED"
+    },
+    {
+      "x": 0.74,
+      "y": 0.57,
+      "w": 0.24,
+      "h": 0.22,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "WHAT THEY STILL WANT"
+    }
+  ]
+}

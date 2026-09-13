@@ -1,0 +1,41 @@
+{
+  "id": "anakin-padme-4-panel",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.32,
+      "w": 0.46,
+      "h": 0.16,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "THE PLAN"
+    },
+    {
+      "x": 0.52,
+      "y": 0.32,
+      "w": 0.46,
+      "h": 0.16,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "SHE ASKS: RIGHT?"
+    },
+    {
+      "x": 0.52,
+      "y": 0.82,
+      "w": 0.46,
+      "h": 0.16,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "SHE ASKS AGAIN: RIGHT?!"
+    }
+  ]
+}

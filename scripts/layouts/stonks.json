@@ -1,0 +1,29 @@
+{
+  "id": "stonks",
+  "zones": [
+    {
+      "x": 0.35,
+      "y": 0.03,
+      "w": 0.62,
+      "h": 0.2,
+      "align": "center",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.065
+      },
+      "placeholder": "THE GENIUS MOVE"
+    },
+    {
+      "x": 0.58,
+      "y": 0.74,
+      "w": 0.39,
+      "h": 0.2,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.065
+      },
+      "placeholder": "THE PAYOFF"
+    }
+  ]
+}

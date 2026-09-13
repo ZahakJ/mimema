@@ -1,0 +1,29 @@
+{
+  "id": "always-has-been",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.03,
+      "w": 0.46,
+      "h": 0.16,
+      "align": "center",
+      "valign": "top",
+      "style": {
+        "fontFrac": 0.085
+      },
+      "placeholder": "WAIT, IT'S ALL …?"
+    },
+    {
+      "x": 0.5,
+      "y": 0.8,
+      "w": 0.47,
+      "h": 0.16,
+      "align": "center",
+      "valign": "bottom",
+      "style": {
+        "fontFrac": 0.085
+      },
+      "placeholder": "ALWAYS HAS BEEN"
+    }
+  ]
+}

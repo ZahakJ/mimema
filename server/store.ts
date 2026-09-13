@@ -417,6 +417,16 @@ export class Store {
     return Number(changes) > 0
   }
 
+  /** Replace a template's caption boxes. The picture and the id are untouched;
+   *  only where the text sits changes, which is what the curated layouts in
+   *  scripts/layouts/ are applied with. */
+  setTemplateZones(id: string, zones: Zone[]): boolean {
+    const changes = this.db
+      .prepare("UPDATE templates SET zones_json = ? WHERE id = ?")
+      .run(JSON.stringify(zones), id).changes
+    return Number(changes) > 0
+  }
+
   /** How many items were forged from a template — what repointItems would
    *  move, without moving it. */
   countItemsForTemplate(templateId: string): number {

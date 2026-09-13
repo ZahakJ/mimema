@@ -1,0 +1,41 @@
+{
+  "id": "spider-man-triple",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.03,
+      "w": 0.3,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "FIRST ACCUSER"
+    },
+    {
+      "x": 0.34,
+      "y": 0.78,
+      "w": 0.32,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "SECOND ACCUSER"
+    },
+    {
+      "x": 0.67,
+      "y": 0.03,
+      "w": 0.31,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.055
+      },
+      "placeholder": "THIRD ACCUSER"
+    }
+  ]
+}
