@@ -191,7 +191,7 @@ travels in a request. Do not put it on a routable address or behind a tunnel.
 | --- | --- | --- |
 | `GET /healthz` | — | `ok` |
 | `POST /forge` | `{"context": string, "source"?: string, "chatId"?: string}`, max 256 KB | `200 {slug, url, shareUrl, templateId, captions, title}` |
-| `POST /digest` | `{"count"?: 1–4, "source"?: string, "exclude"?: string[]}`, max 256 KB | `200 {items: [{title, blurb, sourceUrl, topic, templateId, captions, slug, url, shareUrl}], errors: string[]}` |
+| `POST /digest` | `{"count"?: 1–4, "source"?: string, "exclude"?: string[], "interests"?: string, "feedback"?: [{title, topic, up, down}]}`, max 256 KB | `200 {items: [{title, blurb, sourceUrl, topic, templateId, captions, slug, url, shareUrl}], errors: string[]}` |
 
 `context` is the whole transcript, already formatted by the caller — one
 `[HH:MM] name: text` line per message, optionally followed by
@@ -228,12 +228,30 @@ minutes and runs **one at a time with no waiting line** — a caller arriving
 mid-run gets **429** `{error: "busy", retryAfterMs}` rather than a held socket.
 A `count` outside 1–4 is a **400**, not a quiet clamp.
 
+The caller can also steer the picks. `interests` is a standing brief in plain
+words ("medicine, science, tech, big political moments, video games, big
+controversies"; trimmed to 500 characters, never refused), and `feedback` is
+what the room thought of earlier posts — up to 60 `{title, topic, up, down}`
+entries, the 👍 / 👎 counts on each forum thread. The relay writes both into a
+`taste.md` next to the exclude file and hands the skill `--taste <file>`; the
+skill reads it as a **prior, not a rule** — searches lean toward the interests,
+a topic that keeps getting 👎 is picked less, a huge story outside the brief
+still wins, and nothing in `feedback` is ever picked again. No model is trained;
+the taste lives in Binary's memory and is re-sent every day. A malformed
+feedback entry is dropped silently; only a non-array `feedback` or a non-string
+`interests` is a **400**.
+
 Dry-run the news desk the same way as the picker — searches happen, nothing is
 published:
 
 ```sh
 npm run relay:forge -- --digest --count 2 --dry-run
+npm run relay:forge -- --digest --count 2 --dry-run \
+  --interests "medicine, science, video games" --feedback reactions.json
 ```
+
+`reactions.json` is a bare array of `{title, topic, up, down}` (or a whole
+`/digest` body with a `feedback` key).
 
 ### Setup
 

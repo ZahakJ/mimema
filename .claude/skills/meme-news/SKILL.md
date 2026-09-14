@@ -17,6 +17,9 @@ story, so every field is load-bearing and nothing may be invented.
 - `--count N` — how many stories to return (default 2). Return exactly N.
 - `--exclude <file>` — a file with one title or URL per line, already posted
   recently. Read it and skip anything it names. Missing file = nothing excluded.
+- `--taste <file>` — the room's taste: a standing `# Interests` brief plus
+  `# Reactions to earlier posts` (👍 / 👎 counts per title, best-received
+  first). Read it in Step 3. Missing file = no taste; behave as before.
 - `--json` — output ONLY the JSON block (see Output), no prose. This is the
   contract the relay calls; keep it exact.
 
@@ -78,7 +81,18 @@ misread headline is worse than no meme.
 
 If the excluded list names a story, it is spent; find another.
 
-## Step 3 — pick N stories
+## Step 3 — read the taste file (if `--taste` was given)
+
+Read it before you pick. **Interests** are the standing brief: weight your
+searches and picks toward those areas — a query or two aimed straight at them —
+while still spreading across ≥ 2 topics when N ≥ 2. **Reactions** are the
+audience talking back: a topic or story-shape that keeps getting 👎 should be
+picked less, one that keeps getting 👍 more. Treat it as a prior, not a rule —
+a huge story outside the interests still wins, and a topic with two 👎 in total
+is not banned. **Never re-pick a story that appears in the reactions**: it was
+already posted, whatever the score. No file = no taste; behave as before.
+
+## Step 4 — pick N stories
 
 Pick for **meme-ability**, not importance. The shapes that work:
 
@@ -96,7 +110,7 @@ Rules:
 - If you genuinely cannot find N meme-able stories, return the ones you have
   rather than padding with something you'd have to invent.
 
-## Step 4 — guardrails (hard)
+## Step 5 — guardrails (hard)
 
 - **Never** meme deaths, disasters, violence, victims, crime scenes, someone's
   illness, or anything where a real person is having the worst day of their
@@ -108,7 +122,7 @@ Rules:
 - The `blurb` states what happened. It never editorialises beyond what the
   source says, and never asserts something the source doesn't.
 
-## Step 5 — write each item
+## Step 6 — write each item
 
 - `title` — the forum post title. ≤ 80 characters, punchy, and **true**: no
   claim the source doesn't make. This is a headline, not a caption.

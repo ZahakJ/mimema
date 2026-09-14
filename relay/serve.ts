@@ -11,7 +11,8 @@
  *   GET  /healthz → "ok"
  *   POST /forge   → { context, source?, chatId? } → { slug, url, shareUrl,
  *                    templateId, captions, title }
- *   POST /digest  → { count?, source?, exclude? } → { items, errors }
+ *   POST /digest  → { count?, source?, exclude?, interests?, feedback? }
+ *                    → { items, errors }
  *
  * No auth: the socket is loopback-only, so anything that can reach it can
  * already read .env. Do not bind a routable address.
@@ -25,9 +26,12 @@ import { closeBrowser, forge as realForge, type ForgeOpts, type ForgeResult } fr
 import {
   DEFAULT_COUNT,
   MAX_COUNT,
+  cleanFeedback,
+  cleanInterests,
   digest as realDigest,
   type DigestOpts,
   type DigestResult,
+  type Feedback,
 } from "./digest.ts"
 
 export const DEFAULT_PORT = 8006
@@ -51,7 +55,15 @@ export type HandlerDeps = {
 }
 
 export type ForgeRequest = { context: string; source?: string; chatId?: string }
-export type DigestRequest = { count: number; source?: string; exclude: string[] }
+export type DigestRequest = {
+  count: number
+  source?: string
+  exclude: string[]
+  /** trimmed to MAX_INTERESTS_CHARS, never refused for length */
+  interests: string | null
+  /** malformed entries already dropped; at most MAX_FEEDBACK */
+  feedback: Feedback[]
+}
 
 /**
  * Lowercase slug or nothing: a source we cannot vouch for is dropped rather
@@ -120,7 +132,7 @@ export function parseDigestRequest(raw: string): DigestRequest {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     throw new BadRequest("body must be a JSON object")
   }
-  const { count, source, exclude } = body as Record<string, unknown>
+  const { count, source, exclude, interests, feedback } = body as Record<string, unknown>
 
   let n = DEFAULT_COUNT
   if (count !== undefined) {
@@ -135,7 +147,22 @@ export function parseDigestRequest(raw: string): DigestRequest {
   if (exclude !== undefined && (!Array.isArray(exclude) || exclude.some((e) => typeof e !== "string"))) {
     throw new BadRequest("exclude must be an array of strings")
   }
-  return { count: n, exclude: (exclude as string[] | undefined) ?? [], ...(source === undefined ? {} : { source }) }
+  // the taste fields are advice, not orders: an over-long brief is trimmed and a
+  // malformed reaction is dropped, because neither should cost the room its news.
+  // Only the wrong *type* is a 400 — that is a client bug worth surfacing.
+  if (interests !== undefined && interests !== null && typeof interests !== "string") {
+    throw new BadRequest("interests must be a string")
+  }
+  if (feedback !== undefined && feedback !== null && !Array.isArray(feedback)) {
+    throw new BadRequest("feedback must be an array")
+  }
+  return {
+    count: n,
+    exclude: (exclude as string[] | undefined) ?? [],
+    interests: cleanInterests(interests),
+    feedback: cleanFeedback((feedback as unknown[] | null | undefined) ?? []),
+    ...(source === undefined ? {} : { source }),
+  }
 }
 
 function send(res: http.ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
@@ -257,6 +284,8 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
       const result = await digest({
         count: request.count,
         exclude: request.exclude,
+        interests: request.interests,
+        feedback: request.feedback,
         source,
       })
       if (result.items.length === 0) {

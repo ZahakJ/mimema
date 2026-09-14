@@ -13,7 +13,7 @@ import {
 } from "./serve.ts"
 import { Gate } from "./gate.ts"
 import type { ForgeResult, ForgeOpts } from "./forge.ts"
-import type { DigestOpts, DigestResult } from "./digest.ts"
+import { MAX_FEEDBACK, MAX_INTERESTS_CHARS, type DigestOpts, type DigestResult } from "./digest.ts"
 
 const RESULT: ForgeResult = {
   slug: "abc123",
@@ -255,6 +255,77 @@ describe("POST /digest", () => {
     await digest({ count: 4, exclude: ["old headline"], source: "Discord" })
     expect(calls[0]).toMatchObject({ count: 2, exclude: [] })
     expect(calls[1]).toMatchObject({ count: 4, exclude: ["old headline"], source: "discord" })
+  })
+
+  it("passes interests and feedback through, defaulting to none", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    await digest({})
+    const feedback = [
+      { title: "Cardinals Stun Chargers", topic: "sports", up: 1, down: 4 },
+      { title: "Level-5 CEO Says Sorry For AI", topic: "culture", up: 6, down: 0 },
+    ]
+    await digest({ count: 2, interests: "medicine, science, tech", feedback })
+    expect(calls[0]).toMatchObject({ interests: null, feedback: [] })
+    expect(calls[1]).toMatchObject({ count: 2, interests: "medicine, science, tech", feedback })
+  })
+
+  it("drops malformed feedback entries silently and keeps the good ones", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    const res = await digest({
+      feedback: [
+        { title: "fine", topic: "tech", up: 1, down: 0 },
+        { title: "no counts", topic: "tech" },
+        { title: 5, topic: "tech", up: 1, down: 0 },
+        { title: "negative", topic: "tech", up: -1, down: 0 },
+        "junk",
+        null,
+      ],
+    })
+    expect(res.status).toBe(200)
+    expect(calls[0]?.feedback).toEqual([{ title: "fine", topic: "tech", up: 1, down: 0 }])
+  })
+
+  it("keeps at most MAX_FEEDBACK entries", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    const feedback = Array.from({ length: MAX_FEEDBACK + 5 }, (_, i) => ({ title: `s${i}`, topic: "tech", up: i, down: 0 }))
+    expect((await digest({ feedback })).status).toBe(200)
+    expect(calls[0]?.feedback).toHaveLength(MAX_FEEDBACK)
+  })
+
+  it("400s on a non-array feedback or a non-string interests", async () => {
+    const fn = vi.fn<DigestFn>(async () => DIGEST)
+    const { digest } = await serve({ digest: fn })
+    for (const body of [{ feedback: "no" }, { feedback: {} }, { feedback: 3 }, { interests: 3 }, { interests: ["a"] }]) {
+      const res = await digest(body)
+      expect(res.status).toBe(400)
+      expect(await res.json()).toMatchObject({ error: expect.stringMatching(/feedback|interests/) })
+    }
+    expect(fn).not.toHaveBeenCalled()
+  })
+
+  it("trims over-long interests to the cap instead of refusing them", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    expect((await digest({ interests: "m".repeat(MAX_INTERESTS_CHARS * 3) })).status).toBe(200)
+    expect(calls[0]?.interests).toHaveLength(MAX_INTERESTS_CHARS)
+    expect(calls[0]?.interests?.endsWith("…")).toBe(true)
+  })
+
+  it("treats null and blank taste fields as absent", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    expect((await digest({ interests: null, feedback: null })).status).toBe(200)
+    expect((await digest({ interests: "   ", feedback: [] })).status).toBe(200)
+    expect(calls[0]).toMatchObject({ interests: null, feedback: [] })
+    expect(calls[1]).toMatchObject({ interests: null, feedback: [] })
   })
 
   it("accepts an empty body as the defaults", async () => {
