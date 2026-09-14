@@ -153,6 +153,26 @@ directory and Mimema is unchanged.
 - `source` (e.g. `discord`) becomes a second tag next to `relay` on the wall
   item — lowercased and accepted only as `[a-z0-9-]{1,32}`, else dropped: it is
   caller-supplied text landing on a public page.
+- **`POST /digest`** `{count? (1–4, default 2), source?, exclude?: string[]}` →
+  **200** `{items: [{title, blurb, sourceUrl, topic, templateId, captions, slug,
+  url, shareUrl}], errors: string[]}` — the daily meme-news digest
+  (`relay/digest.ts` + `.claude/skills/meme-news/SKILL.md`). It runs
+  `claude -p "/meme-news --json --count N [--exclude <file>]"` with
+  `WebSearch WebFetch` added to the picker's tools and a **300s** timeout, then
+  puts every pick through `forgePick()` — so a digest meme and a chat meme come
+  out of the same render. Partial success is the contract: a story that won't
+  forge is one line in `errors` and the rest still ship; **500** only when zero
+  items survive. **429** `{error: "busy", retryAfterMs}` — one digest at a time
+  and *no* waiting line (it takes minutes), a plain flag rather than the Gate.
+  **400** for bad JSON or a count out of range (out-of-range is refused, not
+  silently clamped). Wall tags are `relay`, `news`, `<topic>` (one of
+  `tech|internet|sports|culture|world|science`, so already slug-safe) + `source`.
+  `exclude` is what the caller has posted lately — Binary keeps that memory, the
+  relay is stateless — and it goes to a **temp file**, not the prompt, so a long
+  list can't push the instructions out of shape.
+- `forge()` is `pickMeme()` + `forgePick()`; the digest reuses the second half
+  with picks from a different skill. Keep them separately callable — that split
+  is what stops a second render path from growing.
 - `createHandler({ forge })` takes an injected forge, which is how
   `relay/serve.test.ts` covers the whole wire without a model call or a browser.
 - Pipe: transcript → temp file (mkdtemp, removed in `finally`; other people's

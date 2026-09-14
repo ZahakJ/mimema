@@ -38,12 +38,17 @@ export type ForgeResult = {
   pngBytes: Buffer
 }
 
+/** what the picker may touch; the news desk adds WebSearch/WebFetch to it */
+export const PICKER_TOOLS = ["Bash(curl:*)", "Bash(python3:*)", "Read"]
+
 /** injectable so forge() is testable without spending a model call */
 export type ClaudeRunner = (args: {
   prompt: string
   cwd: string
   timeoutMs: number
   model?: string | undefined
+  /** --allowedTools; defaults to PICKER_TOOLS */
+  allowedTools?: string[] | undefined
 }) => Promise<string>
 
 export type ForgeOpts = {
@@ -129,10 +134,10 @@ export function parsePick(raw: string): Pick {
  * skill, so cwd MUST be the repo root. --permission-prompts none turns
  * anything outside --allowedTools into an instant denial instead of a hang.
  */
-export const runClaude: ClaudeRunner = ({ prompt, cwd, timeoutMs, model }) => {
+export const runClaude: ClaudeRunner = ({ prompt, cwd, timeoutMs, model, allowedTools }) => {
   const argv = ["-p", prompt, "--output-format", "json", "--permission-prompts", "none"]
   if (model) argv.push("--model", model)
-  argv.push("--allowedTools", "Bash(curl:*)", "Bash(python3:*)", "Read")
+  argv.push("--allowedTools", ...(allowedTools ?? PICKER_TOOLS))
 
   return new Promise<string>((resolve, reject) => {
     const child = spawn("claude", argv, { cwd, stdio: ["ignore", "pipe", "pipe"] })
@@ -311,9 +316,13 @@ function absolutize(url: string, base: string): string {
   return /^https?:\/\//i.test(url) ? url : `${base}${url}`
 }
 
-/** the whole pipe */
-export async function forge(contextPath: string, opts: ForgeOpts = {}): Promise<ForgeResult> {
-  const pick = await pickMeme(contextPath, opts)
+/**
+ * Everything after the pick: look the template up, fit the captions, render
+ * through the app, ship it to the wall. Split out from forge() so the news
+ * digest can reuse the expensive half with picks that came from a different
+ * skill — there must stay exactly one render-and-publish path.
+ */
+export async function forgePick(pick: Pick, opts: ForgeOpts = {}): Promise<ForgeResult> {
   const template = await fetchTemplate(pick.templateId, opts)
   const captions = fitCaptions(pick.captions, template.zones.length)
   const png = await renderInBrowser(pick.templateId, captions, pick.title, opts)
@@ -329,4 +338,9 @@ export async function forge(contextPath: string, opts: ForgeOpts = {}): Promise<
     title: pick.title,
     pngBytes: png,
   }
+}
+
+/** the whole pipe */
+export async function forge(contextPath: string, opts: ForgeOpts = {}): Promise<ForgeResult> {
+  return forgePick(await pickMeme(contextPath, opts), opts)
 }
