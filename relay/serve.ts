@@ -11,6 +11,7 @@
  *   GET  /healthz → "ok"
  *   POST /forge   → { context, source?, chatId? } → { slug, url, shareUrl,
  *                    templateId, captions, title }
+ *   POST /digest  → { count?, source?, exclude? } → { items, errors }
  *
  * No auth: the socket is loopback-only, so anything that can reach it can
  * already read .env. Do not bind a routable address.
@@ -21,6 +22,13 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import { Gate, seconds } from "./gate.ts"
 import { closeBrowser, forge as realForge, type ForgeOpts, type ForgeResult } from "./forge.ts"
+import {
+  DEFAULT_COUNT,
+  MAX_COUNT,
+  digest as realDigest,
+  type DigestOpts,
+  type DigestResult,
+} from "./digest.ts"
 
 export const DEFAULT_PORT = 8006
 /** Binary formats the transcript; 256 KB is far more chat than the picker can read */
@@ -29,16 +37,21 @@ export const MAX_BODY_BYTES = 256 * 1024
 export const SOURCE_RE = /^[a-z0-9-]{1,32}$/
 /** what to tell a caller the queue is full for, when the cooldown is disabled */
 export const QUEUE_RETRY_MS = 5_000
+/** a digest is minutes of searching and rendering; there is no waiting line for it */
+export const DIGEST_RETRY_MS = 120_000
 
 export type ForgeFn = (contextPath: string, opts?: ForgeOpts) => Promise<ForgeResult>
+export type DigestFn = (opts?: DigestOpts) => Promise<DigestResult>
 
 export type HandlerDeps = {
   /** injected by the tests so they never touch `claude` or a browser */
   forge?: ForgeFn
+  digest?: DigestFn
   gate?: Gate
 }
 
 export type ForgeRequest = { context: string; source?: string; chatId?: string }
+export type DigestRequest = { count: number; source?: string; exclude: string[] }
 
 /**
  * Lowercase slug or nothing: a source we cannot vouch for is dropped rather
@@ -97,6 +110,34 @@ export function parseForgeRequest(raw: string): ForgeRequest {
   return { context, ...(source === undefined ? {} : { source }), ...(chatId === undefined ? {} : { chatId }) }
 }
 
+export function parseDigestRequest(raw: string): DigestRequest {
+  let body: unknown
+  try {
+    body = raw.trim() === "" ? {} : JSON.parse(raw)
+  } catch {
+    throw new BadRequest("body is not valid JSON")
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    throw new BadRequest("body must be a JSON object")
+  }
+  const { count, source, exclude } = body as Record<string, unknown>
+
+  let n = DEFAULT_COUNT
+  if (count !== undefined) {
+    // out of range is a 400, not a silent clamp: the caller asked for something
+    // specific and deserves to know it isn't on the menu
+    if (typeof count !== "number" || !Number.isInteger(count) || count < 1 || count > MAX_COUNT) {
+      throw new BadRequest(`count must be an integer between 1 and ${MAX_COUNT}`)
+    }
+    n = count
+  }
+  if (source !== undefined && typeof source !== "string") throw new BadRequest("source must be a string")
+  if (exclude !== undefined && (!Array.isArray(exclude) || exclude.some((e) => typeof e !== "string"))) {
+    throw new BadRequest("exclude must be an array of strings")
+  }
+  return { count: n, exclude: (exclude as string[] | undefined) ?? [], ...(source === undefined ? {} : { source }) }
+}
+
 function send(res: http.ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
   const json = JSON.stringify(body)
   res.writeHead(status, {
@@ -110,6 +151,10 @@ function send(res: http.ServerResponse, status: number, body: unknown, headers: 
 
 export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
   const forge = deps.forge ?? realForge
+  const digest = deps.digest ?? ((opts?: DigestOpts) => realDigest(opts))
+  // one digest at a time and no waiting line: it takes minutes, so a caller
+  // that arrives mid-run is told to come back rather than parked on a socket
+  let digestRunning = false
   const gate =
     // Who may forge and how often is the client's call (Binary knows Discord users
     // and owners; the daemon only sees a chatId). The daemon's per-chat cooldown
@@ -133,6 +178,10 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
       res.writeHead(200, { "content-type": "text/plain; charset=utf-8", "x-content-type-options": "nosniff" })
       res.end("ok")
       return
+    }
+    if (url === "/digest") {
+      if (req.method !== "POST") return send(res, 405, { error: "method not allowed" })
+      return handleDigest(req, res)
     }
     if (url !== "/forge") return send(res, 404, { error: "not found" })
     if (req.method !== "POST") return send(res, 405, { error: "method not allowed" })
@@ -181,6 +230,47 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
     } catch (err) {
       console.error("[relay] forge failed:", err)
       send(res, 500, { error: oneLine(err) })
+    }
+  }
+
+  async function handleDigest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+    let request: DigestRequest
+    try {
+      request = parseDigestRequest(await readBody(req))
+    } catch (err) {
+      if (err instanceof BadRequest) return send(res, 400, { error: err.message })
+      throw err
+    }
+
+    if (digestRunning) {
+      return send(
+        res,
+        429,
+        { error: "busy", retryAfterMs: DIGEST_RETRY_MS },
+        { "retry-after": String(seconds(DIGEST_RETRY_MS)) },
+      )
+    }
+    digestRunning = true
+
+    const source = cleanSource(request.source)
+    try {
+      const result = await digest({
+        count: request.count,
+        exclude: request.exclude,
+        source,
+      })
+      if (result.items.length === 0) {
+        const why = result.errors[0] ?? "the digest produced nothing"
+        console.error("[relay] digest produced nothing:", result.errors)
+        return send(res, 500, { error: why })
+      }
+      console.log(`[relay] digest → ${result.items.length} item(s), ${result.errors.length} error(s)`)
+      send(res, 200, result)
+    } catch (err) {
+      console.error("[relay] digest failed:", err)
+      send(res, 500, { error: oneLine(err) })
+    } finally {
+      digestRunning = false
     }
   }
 }

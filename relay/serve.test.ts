@@ -2,9 +2,18 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import http from "node:http"
 import type { AddressInfo } from "node:net"
 import { readFile } from "node:fs/promises"
-import { MAX_BODY_BYTES, QUEUE_RETRY_MS, cleanSource, createHandler, type ForgeFn } from "./serve.ts"
+import {
+  DIGEST_RETRY_MS,
+  MAX_BODY_BYTES,
+  QUEUE_RETRY_MS,
+  cleanSource,
+  createHandler,
+  type DigestFn,
+  type ForgeFn,
+} from "./serve.ts"
 import { Gate } from "./gate.ts"
 import type { ForgeResult, ForgeOpts } from "./forge.ts"
+import type { DigestOpts, DigestResult } from "./digest.ts"
 
 const RESULT: ForgeResult = {
   slug: "abc123",
@@ -16,23 +25,36 @@ const RESULT: ForgeResult = {
   pngBytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
 }
 
+const DIGEST_ITEM = {
+  title: "Cloud provider calls its own outage unprecedented",
+  blurb: "Per Reuters, a config push took the region down for four hours.",
+  sourceUrl: "https://example.com/news/outage",
+  topic: "tech" as const,
+  templateId: "this-is-fine",
+  captions: ["everything is on fire", "this is fine"],
+  slug: "abc123",
+  url: "https://meme.example/m/abc123.png",
+  shareUrl: "https://meme.example/m/abc123",
+}
+
+const DIGEST: DigestResult = { items: [DIGEST_ITEM], errors: [] }
+
 /** a server on an ephemeral port with a fake forge — never touches claude or chromium */
-async function serve(opts: { forge?: ForgeFn; gate?: Gate } = {}) {
+async function serve(opts: { forge?: ForgeFn; digest?: DigestFn; gate?: Gate } = {}) {
   const forge = opts.forge ?? (async () => RESULT)
-  const server = http.createServer(createHandler({ forge, ...(opts.gate ? { gate: opts.gate } : {}) }))
+  const digest = opts.digest ?? (async () => DIGEST)
+  const server = http.createServer(createHandler({ forge, digest, ...(opts.gate ? { gate: opts.gate } : {}) }))
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r))
   const { port } = server.address() as AddressInfo
   open.push(server)
-  return {
-    base: `http://127.0.0.1:${port}`,
-    post: (body: string | object, init: RequestInit = {}) =>
-      fetch(`http://127.0.0.1:${port}/forge`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: typeof body === "string" ? body : JSON.stringify(body),
-        ...init,
-      }),
-  }
+  const at = (route: string) => (body: string | object, init: RequestInit = {}) =>
+    fetch(`http://127.0.0.1:${port}${route}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: typeof body === "string" ? body : JSON.stringify(body),
+      ...init,
+    })
+  return { base: `http://127.0.0.1:${port}`, post: at("/forge"), digest: at("/digest") }
 }
 
 const open: http.Server[] = []
@@ -209,5 +231,97 @@ describe("POST /forge — failure", () => {
     expect((await post({ context: "a" })).status).toBe(500)
     expect(gate.waiting).toBe(0)
     expect((await post({ context: "b" })).status).toBe(500)
+  })
+})
+
+describe("POST /digest", () => {
+  it("returns the items and the errors array", async () => {
+    const { digest } = await serve()
+    const res = await digest({})
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ items: [DIGEST_ITEM], errors: [] })
+  })
+
+  it("405s a GET", async () => {
+    const { base } = await serve()
+    expect((await fetch(`${base}/digest`)).status).toBe(405)
+  })
+
+  it("defaults count to 2 and passes exclude and a source through", async () => {
+    const calls: (DigestOpts | undefined)[] = []
+    const fn: DigestFn = async (opts) => (calls.push(opts), DIGEST)
+    const { digest } = await serve({ digest: fn })
+    await digest({})
+    await digest({ count: 4, exclude: ["old headline"], source: "Discord" })
+    expect(calls[0]).toMatchObject({ count: 2, exclude: [] })
+    expect(calls[1]).toMatchObject({ count: 4, exclude: ["old headline"], source: "discord" })
+  })
+
+  it("accepts an empty body as the defaults", async () => {
+    const { base } = await serve()
+    const res = await fetch(`${base}/digest`, { method: "POST" })
+    expect(res.status).toBe(200)
+  })
+
+  it("400s on a count out of range or the wrong shape", async () => {
+    const fn = vi.fn<DigestFn>(async () => DIGEST)
+    const { digest } = await serve({ digest: fn })
+    for (const body of [{ count: 0 }, { count: 5 }, { count: 2.5 }, { count: "2" }, { count: null }]) {
+      expect((await digest(body)).status).toBe(400)
+    }
+    expect(fn).not.toHaveBeenCalled()
+  })
+
+  it("400s on malformed JSON, a non-object body, a bad exclude or a bad source", async () => {
+    const { digest } = await serve()
+    expect((await digest("{not json")).status).toBe(400)
+    expect((await digest([])).status).toBe(400)
+    expect((await digest({ exclude: "old headline" })).status).toBe(400)
+    expect((await digest({ exclude: [1, 2] })).status).toBe(400)
+    expect((await digest({ source: 7 })).status).toBe(400)
+  })
+
+  it("429s busy while one is already running, and frees up after", async () => {
+    let release!: () => void
+    const blocked = new Promise<void>((r) => (release = r))
+    const fn: DigestFn = async () => {
+      await blocked
+      return DIGEST
+    }
+    const { digest } = await serve({ digest: fn })
+    const inflight = digest({})
+    await vi.waitFor(async () => {
+      const res = await digest({})
+      expect(res.status).toBe(429)
+      expect(await res.json()).toEqual({ error: "busy", retryAfterMs: DIGEST_RETRY_MS })
+    })
+    release()
+    expect((await inflight).status).toBe(200)
+    expect((await digest({})).status).toBe(200)
+  })
+
+  it("500s when nothing forged, naming the first reason", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => undefined)
+    const fn: DigestFn = async () => ({ items: [], errors: ["headline: posting to the wall failed: 401"] })
+    const { digest } = await serve({ digest: fn })
+    const res = await digest({})
+    expect(res.status).toBe(500)
+    expect(await res.json()).toEqual({ error: "headline: posting to the wall failed: 401" })
+    expect(err).toHaveBeenCalled()
+  })
+
+  it("500s with one line when the pick step throws, and stays usable", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+    let boom = true
+    const fn: DigestFn = async () => {
+      if (boom) throw new Error("claude timed out after 300000ms\nstack\nlines")
+      return DIGEST
+    }
+    const { digest } = await serve({ digest: fn })
+    const res = await digest({})
+    expect(res.status).toBe(500)
+    expect(await res.json()).toEqual({ error: "claude timed out after 300000ms" })
+    boom = false
+    expect((await digest({})).status).toBe(200)
   })
 })

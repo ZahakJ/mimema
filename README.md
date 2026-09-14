@@ -191,6 +191,7 @@ travels in a request. Do not put it on a routable address or behind a tunnel.
 | --- | --- | --- |
 | `GET /healthz` | — | `ok` |
 | `POST /forge` | `{"context": string, "source"?: string, "chatId"?: string}`, max 256 KB | `200 {slug, url, shareUrl, templateId, captions, title}` |
+| `POST /digest` | `{"count"?: 1–4, "source"?: string, "exclude"?: string[]}`, max 256 KB | `200 {items: [{title, blurb, sourceUrl, topic, templateId, captions, slug, url, shareUrl}], errors: string[]}` |
 
 `context` is the whole transcript, already formatted by the caller — one
 `[HH:MM] name: text` line per message, optionally followed by
@@ -204,6 +205,35 @@ The failures are just as fixed: **400** for malformed JSON, an empty `context`
 or a body over the cap, **429** `{error: "cooling down" | "queue full",
 retryAfterMs}`, **500** `{error: "<one line>"}` with the full stack in the
 journal. Nothing else.
+
+### Daily digest
+
+`POST /digest` is the same pipe pointed at the news. A headless Claude session
+runs [the repo's `/meme-news` skill](.claude/skills/meme-news/SKILL.md) — a
+handful of web searches across tech, internet drama, sports, culture, world and
+science — picks the `count` stories that are actually *meme-able* (an irony, a
+contrast, an overreaction, an "everyone saw this coming"), and writes each one a
+forum-post `title`, a plain two-sentence `blurb` naming the source, the real
+`sourceUrl`, a `topic`, and a template + captions. Every pick then goes through
+the ordinary forge, so a digest meme is rendered by the same `renderMeme` as a
+hand-made one, and lands on the wall tagged `relay`, `news` and its topic.
+
+`exclude` is a list of titles or URLs already posted recently — the relay keeps
+no memory, so the caller (Binary) does, and passes it in; it reaches the skill
+as a temp file, never as prompt text. The search step gets **300 seconds**;
+after that each meme forges at the usual speed. Partial success is normal and
+intentional: if one story fails to render you get the others plus a one-line
+reason in `errors`, and only an empty `items` is a **500**. A digest takes
+minutes and runs **one at a time with no waiting line** — a caller arriving
+mid-run gets **429** `{error: "busy", retryAfterMs}` rather than a held socket.
+A `count` outside 1–4 is a **400**, not a quiet clamp.
+
+Dry-run the news desk the same way as the picker — searches happen, nothing is
+published:
+
+```sh
+npm run relay:forge -- --digest --count 2 --dry-run
+```
 
 ### Setup
 
