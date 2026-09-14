@@ -153,7 +153,8 @@ directory and Mimema is unchanged.
 - `source` (e.g. `discord`) becomes a second tag next to `relay` on the wall
   item — lowercased and accepted only as `[a-z0-9-]{1,32}`, else dropped: it is
   caller-supplied text landing on a public page.
-- **`POST /digest`** `{count? (1–4, default 2), source?, exclude?: string[]}` →
+- **`POST /digest`** `{count? (1–4, default 2), source?, exclude?: string[],
+  interests?: string, feedback?: [{title, topic, up, down}]}` →
   **200** `{items: [{title, blurb, sourceUrl, topic, templateId, captions, slug,
   url, shareUrl}], errors: string[]}` — the daily meme-news digest
   (`relay/digest.ts` + `.claude/skills/meme-news/SKILL.md`). It runs
@@ -170,6 +171,17 @@ directory and Mimema is unchanged.
   `exclude` is what the caller has posted lately — Binary keeps that memory, the
   relay is stateless — and it goes to a **temp file**, not the prompt, so a long
   list can't push the instructions out of shape.
+- **Taste** (same request): `interests?: string` (≤ 500 chars, over-long is
+  trimmed with `…`, not refused) and `feedback?: [{title ≤ 200, topic, up ≥ 0,
+  down ≥ 0}]` (≤ 60; a malformed entry is dropped silently, only a non-array is
+  a 400). `cleanInterests`/`cleanFeedback` in `relay/digest.ts` are the one
+  place those rules live — serve.ts and cli.ts both call them. When either is
+  present `pickNews` writes `tasteFile()` (pure, tested: interests, then
+  reactions sorted by up − down) to `taste.md` in the same mkdtemp dir as
+  `exclude.txt` and passes `--taste <path>`; the skill's Step 3 reads it as a
+  prior, not a rule, and never re-picks a title that appears in it. No taste →
+  no flag → the skill behaves exactly as before. Nothing is trained; Binary
+  owns the memory and re-sends it every day.
 - `forge()` is `pickMeme()` + `forgePick()`; the digest reuses the second half
   with picks from a different skill. Keep them separately callable — that split
   is what stops a second render path from growing.

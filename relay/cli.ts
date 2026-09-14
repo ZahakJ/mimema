@@ -2,19 +2,29 @@
 /**
  * node --env-file-if-exists=.env relay/cli.ts <context.txt> [--dry-run]
  * node --env-file-if-exists=.env relay/cli.ts --digest [--count N] [--dry-run]
+ *     [--interests "<text>"] [--feedback <file.json>]
  *
  * The whole pipe on one file of chat, printed as JSON. --dry-run stops after
  * the picker — no browser, no wall, no INVITE_KEY — which makes it the cheap
  * end-to-end test of the AI half. --digest runs the news desk instead: today's
- * stories, each with a forum post and a meme.
+ * stories, each with a forum post and a meme. --interests and --feedback are
+ * the taste the daemon would get from Binary: a standing brief, and a JSON
+ * array of `{title, topic, up, down}` reactions to earlier posts.
  */
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { closeBrowser, forge, pickMeme } from "./forge.ts"
-import { digest, pickNews } from "./digest.ts"
+import { cleanFeedback, digest, pickNews, type DigestOpts } from "./digest.ts"
+
+const USAGE =
+  "usage: relay/cli.ts <context.txt> [--dry-run]  |  relay/cli.ts --digest [--count N] [--dry-run]" +
+  ' [--interests "<text>"] [--feedback <file.json>]'
 
 const args = process.argv.slice(2)
 const dryRun = args.includes("--dry-run")
 const isDigest = args.includes("--digest")
+/** flags that take a value; their value is never the context file */
+const VALUED = ["--count", "--interests", "--feedback"]
 
 function flag(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -26,10 +36,20 @@ async function main(): Promise<void> {
     const raw = flag("--count")
     const count = raw === undefined ? undefined : Number(raw)
     if (count !== undefined && !Number.isFinite(count)) {
-      console.error("usage: relay/cli.ts --digest [--count N] [--dry-run]")
+      console.error(USAGE)
       process.exit(2)
     }
-    const opts = count === undefined ? {} : { count }
+    const opts: DigestOpts = count === undefined ? {} : { count }
+    const interests = flag("--interests")
+    if (interests !== undefined) opts.interests = interests
+    const feedbackFile = flag("--feedback")
+    if (feedbackFile !== undefined) {
+      const parsed: unknown = JSON.parse(await readFile(path.resolve(feedbackFile), "utf8"))
+      // the same shape Binary sends: a bare array, or the whole request body
+      const list = Array.isArray(parsed) ? parsed : (parsed as { feedback?: unknown } | null)?.feedback
+      if (!Array.isArray(list)) throw new Error(`${feedbackFile}: expected a JSON array of {title, topic, up, down}`)
+      opts.feedback = cleanFeedback(list)
+    }
     if (dryRun) {
       console.log(JSON.stringify({ items: await pickNews(opts) }, null, 2))
     } else {
@@ -38,9 +58,10 @@ async function main(): Promise<void> {
     return
   }
 
-  const file = args.find((a) => !a.startsWith("--") && a !== flag("--count"))
+  const values = new Set(VALUED.map(flag).filter((v) => v !== undefined))
+  const file = args.find((a) => !a.startsWith("--") && !values.has(a))
   if (!file) {
-    console.error("usage: relay/cli.ts <context.txt> [--dry-run]  |  relay/cli.ts --digest [--count N] [--dry-run]")
+    console.error(USAGE)
     process.exit(2)
     return
   }

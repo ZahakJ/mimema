@@ -35,6 +35,16 @@ export const NEWS_TOOLS = ["WebSearch", "WebFetch", ...PICKER_TOOLS]
 export const TOPICS = ["tech", "internet", "sports", "culture", "world", "science"] as const
 export type Topic = (typeof TOPICS)[number]
 
+/** the taste contract (fixed; Binary codes against it): a standing brief plus reactions */
+export const MAX_INTERESTS_CHARS = 500
+export const MAX_FEEDBACK = 60
+export const MAX_FEEDBACK_TITLE = 200
+/** a topic in feedback is whatever the caller stored; it is one short token or it is "?" */
+const MAX_FEEDBACK_TOPIC = 32
+
+/** one earlier post and how the room reacted to it (👍 / 👎 on the forum thread) */
+export type Feedback = { title: string; topic: string; up: number; down: number }
+
 /** what /meme-news --json promises (see .claude/skills/meme-news/SKILL.md) */
 export const digestPickSchema = z.object({
   title: z.string().min(1),
@@ -62,6 +72,10 @@ export type DigestOpts = {
   count?: number
   /** titles/URLs already posted recently — the caller keeps that memory */
   exclude?: string[]
+  /** the standing brief: what the room wants to see more of (≤ 500 chars) */
+  interests?: string | null
+  /** reactions to earlier posts — the audience talking back (≤ 60 entries) */
+  feedback?: Feedback[]
   /** becomes a tag on every wall item, alongside relay/news/<topic> */
   source?: string | null
   model?: string | undefined
@@ -88,6 +102,55 @@ export function tagSafe(raw: string): string | null {
   return /^[a-z0-9-]{1,32}$/.test(tag) ? tag : null
 }
 
+const oneLineText = (s: string) => s.replace(/\s+/g, " ").trim()
+
+/** trimmed to the cap, or null when there is nothing to say */
+export function cleanInterests(raw: unknown): string | null {
+  if (typeof raw !== "string") return null
+  const text = oneLineText(raw)
+  if (text === "") return null
+  return text.length > MAX_INTERESTS_CHARS ? text.slice(0, MAX_INTERESTS_CHARS - 1).trimEnd() + "…" : text
+}
+
+const isCount = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0
+
+/**
+ * Drops what does not fit the contract instead of refusing the whole digest:
+ * one odd entry in a bot's memory must not cost the room its news. Keeps the
+ * first MAX_FEEDBACK survivors in the order given, and caps every title.
+ */
+export function cleanFeedback(raw: unknown[]): Feedback[] {
+  const out: Feedback[] = []
+  for (const entry of raw) {
+    if (out.length >= MAX_FEEDBACK) break
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) continue
+    const { title, topic, up, down } = entry as Record<string, unknown>
+    if (typeof title !== "string" || typeof topic !== "string" || !isCount(up) || !isCount(down)) continue
+    let t = oneLineText(title)
+    if (t === "") continue
+    if (t.length > MAX_FEEDBACK_TITLE) t = t.slice(0, MAX_FEEDBACK_TITLE - 1).trimEnd() + "…"
+    out.push({ title: t, topic: oneLineText(topic).slice(0, MAX_FEEDBACK_TOPIC) || "?", up, down })
+  }
+  return out
+}
+
+/**
+ * The taste file the news desk reads before it picks: the standing brief and
+ * the reactions to earlier posts, best-received first. Pure, so the shape is
+ * testable without a model or a temp dir. The skill treats it as a prior, not
+ * a rule — see .claude/skills/meme-news/SKILL.md.
+ */
+export function tasteFile(interests: string | null | undefined, feedback: Feedback[] = []): string {
+  const brief = cleanInterests(interests) ?? "(none stated)"
+  const entries = cleanFeedback(feedback).sort((a, b) => b.up - b.down - (a.up - a.down))
+  const width = Math.max(0, ...entries.map((e) => e.topic.length + 2))
+  const lines =
+    entries.length === 0
+      ? ["(none yet)"]
+      : entries.map((e) => `- 👍 ${e.up}  👎 ${e.down}  ${`[${e.topic}]`.padEnd(width)}  ${e.title}`)
+  return ["# Interests", brief, "", "# Reactions to earlier posts (👍 / 👎)", ...lines, ""].join("\n")
+}
+
 export function parseDigest(raw: string, count: number): DigestPick[] {
   const parsed = digestSchema.safeParse(extractJson(raw))
   if (!parsed.success) {
@@ -101,23 +164,32 @@ export function parseDigest(raw: string, count: number): DigestPick[] {
 
 /**
  * The cheap half: search + pick, no browser and no INVITE_KEY. `--dry-run`
- * stops here. The exclude list goes to a temp file rather than the prompt so a
- * long memory cannot push the instructions out of shape — and it is removed in
- * `finally`, same hygiene as the forge's transcript.
+ * stops here. The exclude list and the taste file go to a temp dir rather than
+ * the prompt so a long memory cannot push the instructions out of shape — and
+ * it is removed in `finally`, same hygiene as the forge's transcript.
  */
 export async function pickNews(opts: DigestOpts = {}, deps: DigestDeps = {}): Promise<DigestPick[]> {
   const runner = deps.runner ?? runClaude
   const count = clampCount(opts.count)
   const exclude = (opts.exclude ?? []).map((s) => s.trim()).filter((s) => s !== "")
+  const interests = cleanInterests(opts.interests)
+  const feedback = cleanFeedback(opts.feedback ?? [])
 
   let dir: string | null = null
   try {
     let prompt = `/meme-news --json --count ${count}`
-    if (exclude.length > 0) {
+    if (exclude.length > 0 || interests !== null || feedback.length > 0) {
       dir = await mkdtemp(path.join(tmpdir(), "mimema-digest-"))
+    }
+    if (exclude.length > 0 && dir) {
       const excludePath = path.join(dir, "exclude.txt")
       await writeFile(excludePath, exclude.join("\n") + "\n", "utf8")
       prompt += ` --exclude ${excludePath}`
+    }
+    if ((interests !== null || feedback.length > 0) && dir) {
+      const tastePath = path.join(dir, "taste.md")
+      await writeFile(tastePath, tasteFile(interests, feedback), "utf8")
+      prompt += ` --taste ${tastePath}`
     }
     const raw = await runner({
       prompt,
