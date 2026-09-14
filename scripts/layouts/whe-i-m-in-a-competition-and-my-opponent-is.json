@@ -1,0 +1,25 @@
+{
+  "id": "whe-i-m-in-a-competition-and-my-opponent-is",
+  "zones": [
+    {
+      "x": 0.08,
+      "y": 0.115,
+      "w": 0.86,
+      "h": 0.15,
+      "align": "left",
+      "valign": "middle",
+      "style": { "fontFrac": 0.07, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT KIND OF COMPETITION"
+    },
+    {
+      "x": 0.58,
+      "y": 0.36,
+      "w": 0.38,
+      "h": 0.15,
+      "align": "left",
+      "valign": "middle",
+      "style": { "fontFrac": 0.07, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO I'M UP AGAINST"
+    }
+  ]
+}

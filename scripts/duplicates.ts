@@ -5,19 +5,22 @@
 // Brain" the same four panels. normalizeName() in fetch-templates.ts catches
 // spelling drift; nothing short of looking at the pixels catches these.
 //
-// So they are listed. Each group was confirmed by eye — a perceptual hash
-// proposes candidates and then a human looks, because the hash cheerfully
-// calls every four-panel meme a duplicate of every other one, and would have
-// merged the four Socially * Penguins, which really are four different memes.
+// So they are listed. Each group was confirmed by eye — scripts/propose-
+// duplicates.ts proposes candidates and then a human looks, because the hash
+// cheerfully calls every four-panel meme a duplicate of every other one, and
+// would have merged the four Socially * Penguins, which really are four
+// different memes.
 //
 // This list is the single source of truth for two consumers:
 //   fetch-templates.ts  — never import a `drop` id in the first place
 //   dedupe-templates.ts — prune the ones an earlier run already imported
 //
-// Adding a group: put the better image in `keep` — resolution decides, since
-// export re-renders at the template's native size, and a blank always beats
-// one with a caption baked in. `rename` folds the loser's name into the
-// keeper's so the picker's search box still finds the meme under both.
+// Adding a group: put the better image in `keep` — a curated layout in
+// scripts/layouts/ decides first (that placement is hand work, and dropping
+// its template throws it away), then resolution, since export re-renders at
+// the template's native size, and a blank always beats one with a caption
+// baked in. `rename` folds the loser's name into the keeper's so the picker's
+// search box still finds the meme under both.
 
 export type DuplicateGroup = {
   /** the template id that survives */
@@ -34,8 +37,9 @@ export const DUPLICATE_GROUPS: DuplicateGroup[] = [
   // ————— same picture, different pack —————
   {
     keep: "i-am-the-captain-now",
-    drop: ["i-m-the-captain-now"],
-    note: "same frame; memegen's is 819x600 against imgflip's 478x350",
+    drop: ["i-m-the-captain-now", "look-at-me"],
+    rename: "I am the Captain Now (Look At Me)",
+    note: "same frame; memegen's 819x600 beats imgflip's 478x350 and 300x300 square crop",
   },
   {
     keep: "is-this-a-pigeon",
@@ -49,8 +53,8 @@ export const DUPLICATE_GROUPS: DuplicateGroup[] = [
   },
   {
     keep: "drake-hotline-bling",
-    drop: ["drake-blank"],
-    note: "same two panels at 1200x1200 rather than 717x717",
+    drop: ["drake-blank", "no-yes"],
+    note: "same two panels at 1200x1200 rather than 717x717; no-yes is the same two frames shrunk into a bordered table, and the keeper has the curated right-column layout",
   },
   {
     keep: "expanding-brain",
@@ -97,6 +101,12 @@ export const DUPLICATE_GROUPS: DuplicateGroup[] = [
     keep: "bernie-sanders-once-again-asking",
     drop: ["bernie-i-am-once-again-asking-for-your-support"],
     note: "the dropped one has 'I am once again asking' burned into the image",
+  },
+  {
+    keep: "disappointed-black-guy",
+    drop: ["expectation-vs-reality"],
+    rename: "Disappointed Black Guy (Expectation vs. Reality)",
+    note: "same two frames, memegen's just leaves less white beside the face; 1172x756 beats 700x600 and only the keeper has a curated layout",
   },
 
   // ————— same meme, reordered or renamed title —————

@@ -1,0 +1,55 @@
+{
+  "id": "elmo-choosing-cocaine",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.02,
+      "w": 0.29,
+      "h": 0.06,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.032 },
+      "placeholder": "THE HEALTHY OPTION"
+    },
+    {
+      "x": 0.02,
+      "y": 0.09,
+      "w": 0.29,
+      "h": 0.06,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.032 },
+      "placeholder": "THE SENSIBLE OPTION"
+    },
+    {
+      "x": 0.02,
+      "y": 0.16,
+      "w": 0.29,
+      "h": 0.06,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.032 },
+      "placeholder": "THE OPTION EVERYONE RECOMMENDS"
+    },
+    {
+      "x": 0.64,
+      "y": 0.03,
+      "w": 0.33,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "THE ONE HE DIVES INTO"
+    },
+    {
+      "x": 0.02,
+      "y": 0.52,
+      "w": 0.4,
+      "h": 0.08,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "WHO'S CHOOSING"
+    }
+  ]
+}

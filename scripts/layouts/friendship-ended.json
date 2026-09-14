@@ -1,0 +1,25 @@
+{
+  "id": "friendship-ended",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.005,
+      "w": 0.96,
+      "h": 0.125,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.095 },
+      "placeholder": "WHO'S OUT"
+    },
+    {
+      "x": 0.35,
+      "y": 0.16,
+      "w": 0.29,
+      "h": 0.45,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "WHO'S MY BEST FRIEND NOW"
+    }
+  ]
+}

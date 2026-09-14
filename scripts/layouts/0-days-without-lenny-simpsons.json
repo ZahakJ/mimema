@@ -1,0 +1,25 @@
+{
+  "id": "0-days-without-lenny-simpsons",
+  "zones": [
+    {
+      "x": 0.55,
+      "y": 0.26,
+      "w": 0.43,
+      "h": 0.25,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.075, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE THING NOBODY CAN GO A DAY WITHOUT"
+    },
+    {
+      "x": 0.03,
+      "y": 0.8,
+      "w": 0.94,
+      "h": 0.17,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.085 },
+      "placeholder": "WHO JUST DID IT AGAIN"
+    }
+  ]
+}

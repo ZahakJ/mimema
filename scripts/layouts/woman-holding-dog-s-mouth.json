@@ -1,0 +1,41 @@
+{
+  "id": "woman-holding-dog-s-mouth",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.09,
+      "w": 0.24,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.04
+      },
+      "placeholder": "WHAT KEEPS ME QUIET"
+    },
+    {
+      "x": 0.33,
+      "y": 0.38,
+      "w": 0.3,
+      "h": 0.12,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.04
+      },
+      "placeholder": "WHAT ALMOST CAME OUT"
+    },
+    {
+      "x": 0.04,
+      "y": 0.87,
+      "w": 0.5,
+      "h": 0.11,
+      "align": "center",
+      "valign": "middle",
+      "style": {
+        "fontFrac": 0.045
+      },
+      "placeholder": "WHO'S BEING SHUT UP"
+    }
+  ]
+}

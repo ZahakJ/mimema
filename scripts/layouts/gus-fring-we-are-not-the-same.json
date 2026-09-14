@@ -1,0 +1,35 @@
+{
+  "id": "gus-fring-we-are-not-the-same",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.56,
+      "w": 0.92,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "WHAT YOU DO"
+    },
+    {
+      "x": 0.04,
+      "y": 0.7,
+      "w": 0.92,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "WHAT I DO"
+    },
+    {
+      "x": 0.04,
+      "y": 0.85,
+      "w": 0.92,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "WE ARE NOT THE SAME"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "fake-spirit-halloween-costume",
+  "zones": [
+    {
+      "x": 0.06,
+      "y": 0.26,
+      "w": 0.33,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE COSTUME'S NAME"
+    },
+    {
+      "x": 0.06,
+      "y": 0.45,
+      "w": 0.33,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE TAGLINE ON THE BAG"
+    },
+    {
+      "x": 0.46,
+      "y": 0.14,
+      "w": 0.42,
+      "h": 0.32,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT'S PICTURED ON THE BAG"
+    },
+    {
+      "x": 0.46,
+      "y": 0.5,
+      "w": 0.42,
+      "h": 0.32,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE DETAIL THAT GIVES IT AWAY"
+    },
+    {
+      "x": 0.05,
+      "y": 0.67,
+      "w": 0.33,
+      "h": 0.11,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO IT'S FOR"
+    }
+  ]
+}

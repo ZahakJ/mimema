@@ -1,0 +1,35 @@
+{
+  "id": "bike-fall",
+  "zones": [
+    {
+      "x": 0.52,
+      "y": 0.05,
+      "w": 0.43,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.038 },
+      "placeholder": "WHO'S RIDING ALONG FINE"
+    },
+    {
+      "x": 0.07,
+      "y": 0.4,
+      "w": 0.33,
+      "h": 0.2,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.038 },
+      "placeholder": "THE STICK THEY JAM IN THEIR OWN WHEEL"
+    },
+    {
+      "x": 0.55,
+      "y": 0.69,
+      "w": 0.4,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.038 },
+      "placeholder": "WHO THEY BLAME FOR THE CRASH"
+    }
+  ]
+}

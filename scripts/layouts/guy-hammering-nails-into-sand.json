@@ -1,0 +1,35 @@
+{
+  "id": "guy-hammering-nails-into-sand",
+  "zones": [
+    {
+      "x": 0.05,
+      "y": 0.3,
+      "w": 0.26,
+      "h": 0.11,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "WHO'S TRYING"
+    },
+    {
+      "x": 0.5,
+      "y": 0.86,
+      "w": 0.45,
+      "h": 0.1,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "THE POINTLESS FIX"
+    },
+    {
+      "x": 0.55,
+      "y": 0.03,
+      "w": 0.42,
+      "h": 0.12,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "THE UNSTOPPABLE TIDE"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "phoebe-teaching-joey",
+  "zones": [
+    {
+      "x": 0.015,
+      "y": 0.136,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "WHAT I PATIENTLY EXPLAIN"
+    },
+    {
+      "x": 0.515,
+      "y": 0.136,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "THEIR FIRST ATTEMPT"
+    },
+    {
+      "x": 0.015,
+      "y": 0.387,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "ME SAYING IT AGAIN, SLOWER"
+    },
+    {
+      "x": 0.515,
+      "y": 0.387,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "THEIR SECOND ATTEMPT"
+    },
+    {
+      "x": 0.015,
+      "y": 0.885,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "ME GIVING UP"
+    },
+    {
+      "x": 0.515,
+      "y": 0.885,
+      "w": 0.47,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.042 },
+      "placeholder": "WHAT THEY CONFIDENTLY SHIP"
+    }
+  ]
+}

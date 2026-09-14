@@ -1,0 +1,35 @@
+{
+  "id": "who-killed-hannibal",
+  "zones": [
+    {
+      "x": 0.6,
+      "y": 0.3,
+      "w": 0.36,
+      "h": 0.12,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "WHO PULLED THE TRIGGER"
+    },
+    {
+      "x": 0.05,
+      "y": 0.13,
+      "w": 0.35,
+      "h": 0.11,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "WHAT THEY KILLED"
+    },
+    {
+      "x": 0.04,
+      "y": 0.86,
+      "w": 0.92,
+      "h": 0.12,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "THE FAKE-INNOCENT QUESTION"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "cheems",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.94,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.075, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT HE'S BEING ASKED TO DO"
+    },
+    {
+      "x": 0.03,
+      "y": 0.82,
+      "w": 0.94,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.075, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "HIS FEEBLE EXCUSE"
+    }
+  ]
+}
