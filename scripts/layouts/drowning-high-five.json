@@ -1,0 +1,35 @@
+{
+  "id": "drowning-high-five",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.32,
+      "w": 0.42,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "WHO'S GOING UNDER"
+    },
+    {
+      "x": 0.52,
+      "y": 0.32,
+      "w": 0.43,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "WHO REACHES OUT TO HELP"
+    },
+    {
+      "x": 0.04,
+      "y": 0.81,
+      "w": 0.42,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "THE HELP THEY ACTUALLY GIVE"
+    }
+  ]
+}

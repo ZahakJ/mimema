@@ -1,0 +1,35 @@
+{
+  "id": "are-you-two-friends",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.395,
+      "w": 0.92,
+      "h": 0.09,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE QUESTION BOTH ARE ASKED"
+    },
+    {
+      "x": 0.04,
+      "y": 0.9,
+      "w": 0.42,
+      "h": 0.082,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE FLAT DENIAL"
+    },
+    {
+      "x": 0.52,
+      "y": 0.885,
+      "w": 0.44,
+      "h": 0.085,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE CHEERFUL YES"
+    }
+  ]
+}

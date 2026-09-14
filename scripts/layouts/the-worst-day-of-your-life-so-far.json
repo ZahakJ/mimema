@@ -1,0 +1,25 @@
+{
+  "id": "the-worst-day-of-your-life-so-far",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.94,
+      "h": 0.2,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.075 },
+      "placeholder": "THE THING YOU THINK IS THE WORST"
+    },
+    {
+      "x": 0.03,
+      "y": 0.77,
+      "w": 0.94,
+      "h": 0.21,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.075 },
+      "placeholder": "THE WORSE ONE STILL COMING"
+    }
+  ]
+}

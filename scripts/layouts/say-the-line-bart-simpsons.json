@@ -1,0 +1,35 @@
+{
+  "id": "say-the-line-bart-simpsons",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.24,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "WHAT THEY DEMAND I SAY"
+    },
+    {
+      "x": 0.03,
+      "y": 0.565,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "THE LINE, SAID GRUDGINGLY"
+    },
+    {
+      "x": 0.03,
+      "y": 0.885,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.04 },
+      "placeholder": "THE CROWD LOSES IT"
+    }
+  ]
+}

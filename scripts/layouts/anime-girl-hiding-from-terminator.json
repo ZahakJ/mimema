@@ -1,0 +1,25 @@
+{
+  "id": "anime-girl-hiding-from-terminator",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.85,
+      "w": 0.34,
+      "h": 0.13,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE THING HUNTING YOU"
+    },
+    {
+      "x": 0.45,
+      "y": 0.02,
+      "w": 0.53,
+      "h": 0.12,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "WHO'S HIDING FROM IT"
+    }
+  ]
+}

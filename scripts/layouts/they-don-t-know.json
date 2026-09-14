@@ -1,0 +1,15 @@
+{
+  "id": "they-don-t-know",
+  "zones": [
+    {
+      "x": 0.31,
+      "y": 0.03,
+      "w": 0.66,
+      "h": 0.17,
+      "align": "left",
+      "valign": "top",
+      "style": { "fontFrac": 0.055, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT THEY DON'T KNOW ABOUT ME"
+    }
+  ]
+}

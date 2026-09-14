@@ -1,0 +1,15 @@
+{
+  "id": "ghygs2owuaa4dv5",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.05,
+      "w": 0.92,
+      "h": 0.22,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.1 },
+      "placeholder": "THE HOT TAKE"
+    }
+  ]
+}

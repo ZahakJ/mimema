@@ -1,0 +1,35 @@
+{
+  "id": "finding-neverland",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.215,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE HOPEFUL QUESTION"
+    },
+    {
+      "x": 0.03,
+      "y": 0.565,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE CRUSHING ANSWER"
+    },
+    {
+      "x": 0.03,
+      "y": 0.885,
+      "w": 0.94,
+      "h": 0.095,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.045 },
+      "placeholder": "THE AFTERMATH"
+    }
+  ]
+}

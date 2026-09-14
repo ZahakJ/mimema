@@ -1,0 +1,25 @@
+{
+  "id": "two-guys-on-a-bus",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.27,
+      "w": 0.27,
+      "h": 0.2,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "THE PESSIMIST'S VIEW"
+    },
+    {
+      "x": 0.61,
+      "y": 0.13,
+      "w": 0.36,
+      "h": 0.21,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.05 },
+      "placeholder": "THE OPTIMIST'S VIEW"
+    }
+  ]
+}

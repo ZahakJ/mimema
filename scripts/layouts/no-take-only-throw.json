@@ -1,0 +1,35 @@
+{
+  "id": "no-take-only-throw",
+  "zones": [
+    {
+      "x": 0.04,
+      "y": 0.09,
+      "w": 0.28,
+      "h": 0.17,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE THING I'M HOLDING"
+    },
+    {
+      "x": 0.365,
+      "y": 0.09,
+      "w": 0.275,
+      "h": 0.17,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO REACHES FOR IT"
+    },
+    {
+      "x": 0.685,
+      "y": 0.09,
+      "w": 0.275,
+      "h": 0.17,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT I SNARL BACK"
+    }
+  ]
+}

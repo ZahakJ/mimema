@@ -1,0 +1,35 @@
+{
+  "id": "captain-america-elevator-fight-dad-joke",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.94,
+      "h": 0.1,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "THE JOKE NOBODY ASKED FOR"
+    },
+    {
+      "x": 0.02,
+      "y": 0.35,
+      "w": 0.45,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "THE OFFENDED REPLY"
+    },
+    {
+      "x": 0.03,
+      "y": 0.68,
+      "w": 0.94,
+      "h": 0.1,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.035 },
+      "placeholder": "WHAT IT ESCALATES INTO"
+    }
+  ]
+}

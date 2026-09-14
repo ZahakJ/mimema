@@ -1,0 +1,55 @@
+{
+  "id": "i-made-this",
+  "zones": [
+    {
+      "x": 0.285,
+      "y": 0.04,
+      "w": 0.135,
+      "h": 0.07,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.028, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE CREATOR'S CLAIM"
+    },
+    {
+      "x": 0.495,
+      "y": 0.035,
+      "w": 0.27,
+      "h": 0.085,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.03, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE TAKER'S QUESTION"
+    },
+    {
+      "x": 0.02,
+      "y": 0.2,
+      "w": 0.25,
+      "h": 0.11,
+      "align": "right",
+      "valign": "middle",
+      "style": { "fontFrac": 0.03, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO ACTUALLY MADE IT"
+    },
+    {
+      "x": 0.75,
+      "y": 0.2,
+      "w": 0.23,
+      "h": 0.11,
+      "align": "left",
+      "valign": "middle",
+      "style": { "fontFrac": 0.03, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO TAKES THE CREDIT"
+    },
+    {
+      "x": 0.325,
+      "y": 0.725,
+      "w": 0.19,
+      "h": 0.095,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.03, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "THE TAKER'S CLAIM"
+    }
+  ]
+}

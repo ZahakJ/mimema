@@ -1,0 +1,25 @@
+{
+  "id": "genie-lamp",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.03,
+      "w": 0.94,
+      "h": 0.14,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "THE WISH YOU MADE"
+    },
+    {
+      "x": 0.03,
+      "y": 0.82,
+      "w": 0.94,
+      "h": 0.15,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.055 },
+      "placeholder": "HOW IT BACKFIRED"
+    }
+  ]
+}

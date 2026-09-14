@@ -1,0 +1,25 @@
+{
+  "id": "crying-on-floor",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.03,
+      "w": 0.6,
+      "h": 0.16,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.08, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHAT FINALLY BROKE YOU"
+    },
+    {
+      "x": 0.03,
+      "y": 0.79,
+      "w": 0.9,
+      "h": 0.18,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.08, "fill": "#000000", "stroke": "#ffffff" },
+      "placeholder": "WHO'S THE PUDDLE"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "why-shouldn-t-i-keep-it",
+  "zones": [
+    {
+      "x": 0.03,
+      "y": 0.02,
+      "w": 0.94,
+      "h": 0.18,
+      "align": "center",
+      "valign": "top",
+      "style": { "fontFrac": 0.065 },
+      "placeholder": "THE THING I'M FONDLY HOLDING"
+    },
+    {
+      "x": 0.03,
+      "y": 0.78,
+      "w": 0.94,
+      "h": 0.2,
+      "align": "center",
+      "valign": "bottom",
+      "style": { "fontFrac": 0.065 },
+      "placeholder": "WHY I SHOULD LET IT GO"
+    }
+  ]
+}

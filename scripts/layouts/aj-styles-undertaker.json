@@ -1,0 +1,25 @@
+{
+  "id": "aj-styles-undertaker",
+  "zones": [
+    {
+      "x": 0.02,
+      "y": 0.54,
+      "w": 0.33,
+      "h": 0.24,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.06 },
+      "placeholder": "WHAT YOU'RE CELEBRATING"
+    },
+    {
+      "x": 0.71,
+      "y": 0.03,
+      "w": 0.27,
+      "h": 0.3,
+      "align": "center",
+      "valign": "middle",
+      "style": { "fontFrac": 0.06 },
+      "placeholder": "WHAT'S RIGHT BEHIND YOU"
+    }
+  ]
+}
