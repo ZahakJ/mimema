@@ -38,19 +38,32 @@ curl -sf http://127.0.0.1:8001/api/templates -o /tmp/mimema-catalog.json
 python3 -c '
 import json, re
 generic = re.compile(r"^(TOP TEXT|BOTTOM TEXT|TEXT( \d+)?)?$", re.I)
+meanings = json.load(open("scripts/meanings.json"))
 for t in json.load(open("/tmp/mimema-catalog.json")):
     ph = [z.get("placeholder", "").strip() for z in t["zones"]]
     real = [p for p in ph if not generic.match(p)]
-    extra = "  [" + " | ".join(real) + "]" if real else ""
-    n = len(t["zones"])
-    print(t["id"], f"{n}z", t["name"] + extra, sep="\t")
+    line = t["id"] + "\t" + str(len(t["zones"])) + "z\t" + t["name"]
+    if real:
+        line += "  [" + " | ".join(real) + "]"
+    m = meanings.get(t["id"])
+    if m:
+        line += "  <" + "/".join(m["shapes"]) + "> " + m["says"]
+    print(line)
 '
 ```
 
-One line per template: `id`, zone count, name, and — for templates with a
-curated layout — the role of each zone in brackets, in zone order. Those
-brackets matter more than the name when a template's boxes label people or
-panels.
+(cwd is the repo root, so `scripts/meanings.json` resolves; if it does not, run
+the snippet without the `meanings` lines and pick with more caution.)
+
+One line per template: `id`, zone count, name, the role of each zone in
+brackets (templates with a curated layout), and — for the ~85 templates
+everyone recognises — the `<shapes>` the picture can carry plus one line on
+**what the picture says**.
+
+Read in this order of authority: what the picture says > the zone roles > the
+name. The name is the least reliable thing on the line: "It's Happening" is not
+a template for a thing that happened, it is Ron Paul losing his mind in front
+of lasers.
 
 Ids are the only thing the app understands. Never invent one, never "fix" a
 spelling; copy it from this list.
