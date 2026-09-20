@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { readFile } from "node:fs/promises"
 import {
   DEFAULT_COUNT,
+  DEFAULT_NEWS_MODEL,
   MAX_COUNT,
   MAX_FEEDBACK,
   MAX_FEEDBACK_TITLE,
@@ -13,27 +14,38 @@ import {
   digest,
   parseDigest,
   pickNews,
+  redoFile,
+  storyTokens,
   tagSafe,
   tasteFile,
+  vetPicks,
+  type DigestPick,
   type Feedback,
 } from "./digest.ts"
 import type { ForgeOpts, ForgeResult, Pick } from "./forge.ts"
 
-const STORY = {
-  title: "Cloud provider explains outage with the word 'unprecedented'",
-  blurb: "Per Reuters, the provider blamed a config push for a four-hour outage.",
+const STORY: DigestPick = {
+  title: "Vertex Cloud calls its 4-hour outage 'unprecedented'",
+  blurb: "Per Reuters, Vertex Cloud blamed a config push for a 4-hour outage across three regions.",
   sourceUrl: "https://example.com/news/outage",
   topic: "tech",
+  shape: "denial",
+  why: "the outage is the fire: the config push on top, Vertex's own statement underneath",
   templateId: "this-is-fine",
-  captions: ["everything is on fire", "this is fine"],
+  captions: ["Vertex pushes one config change", "unprecedented, and fine"],
 }
 
-const SECOND = {
+const SECOND: DigestPick = {
   ...STORY,
-  title: "Studio delays the sequel a third time",
+  title: "Astral Studios delays the Hollow sequel a third time",
+  blurb: "Per The Verge, Astral Studios moved Hollow II to 2028 — its third slip.",
   sourceUrl: "https://example.com/news/delay",
   topic: "culture",
+  shape: "predictable",
+  why: "Astral's first promise is the rejected zone, the 2028 date the approved one",
+  // no curated meaning for this id, so vetPicks cannot check its shape — on purpose
   templateId: "drake",
+  captions: ["Astral promises Hollow II this year", "Astral says 2028, again"],
 }
 
 const json = (...items: object[]) => JSON.stringify({ items })
@@ -227,6 +239,120 @@ describe("parseDigest", () => {
   })
 })
 
+describe("storyTokens", () => {
+  it("keeps the names and the numbers and drops the grammar", () => {
+    const t = storyTokens("Per Reuters, Bungie denied that Destiny and Marathon are merging in 2027.")
+    expect([...t].sort()).toEqual(["2027", "bungie", "destiny", "marathon", "reuter"])
+  })
+
+  it("folds possessives and plurals so a caption can inflect them", () => {
+    expect(storyTokens("OpenAI's framework").has("openai")).toBe(true)
+    expect(storyTokens("Two Chargers fumbles").has("charger")).toBe(true)
+  })
+
+  it("is generous with a Title Case headline rather than clever", () => {
+    // every word is capitalised, so nearly every content word counts. That is
+    // the intent: this is a floor under the captions, not a judge of them.
+    const t = storyTokens("Blood Group Mystery from 1972 Officially Ratified as MAL System")
+    expect(t.has("blood")).toBe(true)
+    expect(t.has("1972")).toBe(true)
+    expect(t.has("from")).toBe(false)
+  })
+})
+
+describe("vetPicks", () => {
+  const pick = (over: Partial<DigestPick>): DigestPick => ({ ...STORY, ...over })
+
+  it("keeps a pick that names the story and fits the template's meaning", () => {
+    const { kept, rejected } = vetPicks([pick({}), pick({ ...SECOND })])
+    expect(rejected).toEqual([])
+    expect(kept).toHaveLength(2)
+  })
+
+  it("refuses captions that share no name, number or product with the story", () => {
+    const { kept, rejected } = vetPicks([pick({ captions: ["when you ship on a friday", "this is fine"] })])
+    expect(kept).toEqual([])
+    expect(rejected[0]?.why).toMatch(/share not one name/)
+    // the reason hands the desk the nouns it should have used
+    expect(rejected[0]?.why).toContain("vertex")
+  })
+
+  it("still accepts a joke that paraphrases, as long as one noun survives", () => {
+    const { kept } = vetPicks([pick({ captions: ["Vertex: it was one config push", "nothing to see"] })])
+    expect(kept).toHaveLength(1)
+  })
+
+  it("refuses a template whose picture cannot carry the stated shape", () => {
+    const { kept, rejected } = vetPicks([pick({ shape: "escalation" })])
+    expect(kept).toEqual([])
+    // and it says what the picture actually means, so the redo has something to work with
+    expect(rejected[0]?.why).toMatch(/this-is-fine cannot carry an? "escalation" joke/)
+    expect(rejected[0]?.why).toMatch(/burning room/)
+  })
+
+  it("lets a template with no curated meaning through whatever the shape", () => {
+    expect(vetPicks([pick({ ...SECOND, shape: "escalation" })]).kept).toHaveLength(1)
+  })
+
+  it("refuses the same template twice in one digest", () => {
+    const { kept, rejected } = vetPicks([
+      pick({}),
+      pick({ ...SECOND, templateId: "this-is-fine", shape: "denial" }),
+    ])
+    expect(kept).toHaveLength(1)
+    expect(rejected[0]?.why).toMatch(/already used by another story/)
+  })
+
+  it("refuses a second story from a topic the digest already has", () => {
+    const { kept, rejected } = vetPicks([pick({}), pick({ ...SECOND, topic: "tech" })])
+    expect(kept).toHaveLength(1)
+    expect(rejected[0]?.why).toMatch(/spread the digest across topics/)
+  })
+
+  it("passes every meme the desk actually posted in September", () => {
+    // The real digests: the check is a floor, so all of these clear it. What
+    // was wrong with half of them is the joke, which no regex can measure —
+    // that is Step 5 of the skill's job, not this function's. If a change here
+    // starts rejecting these, it has become a taste test and gone too far.
+    const real: [string, string, string[]][] = [
+      [
+        "Plugin4Shell Bug Lets Malicious Code Slip Past AI Coding Agents' SHA Pins",
+        "A plugin can be pinned to an exact SHA and still load unreviewed code.",
+        ["pin every plugin to an exact SHA hash", "so nobody can slip in unreviewed code",
+         "name your malicious branch after that same SHA", "name your malicious branch after that same SHA"],
+      ],
+      [
+        "Bungie shoots down leak claiming Destiny and Marathon are merging",
+        "Bungie denied a leak that Destiny and Marathon would merge.",
+        ["leak: Destiny and Marathon are merging", "Bungie: nope, they're just siblings"],
+      ],
+      [
+        "Zuckerberg breaks from Altman, Musk, and Amodei on slowing AI down",
+        "Zuckerberg declined to join calls for a slowdown.",
+        ["am I wrong to keep racing?", "no, Altman, Musk, and Amodei are wrong"],
+      ],
+    ]
+    for (const [title, blurb, captions] of real) {
+      const { kept } = vetPicks([pick({ title, blurb, captions, templateId: "x-unknown", topic: "tech" })])
+      expect(kept, title).toHaveLength(1)
+    }
+  })
+})
+
+describe("redoFile", () => {
+  it("names what was refused, why, and what is already taken", () => {
+    const bad = { ...STORY, shape: "escalation" } as DigestPick
+    const text = redoFile(null, [{ pick: bad, why: "this-is-fine cannot carry that" }], [SECOND as DigestPick])
+    expect(text).toContain("# Redo")
+    expect(text).toContain(`"${STORY.title}" (this-is-fine) — this-is-fine cannot carry that`)
+    expect(text).toContain(`"${SECOND.title}" [culture] (drake)`)
+  })
+
+  it("says so when the whole answer was unusable", () => {
+    expect(redoFile("no JSON object in the picker's answer", [], [])).toContain("no JSON object")
+  })
+})
+
 describe("pickNews", () => {
   it("runs the slash form at the repo root with the web tools allowed", async () => {
     const calls: Parameters<NonNullable<Parameters<typeof pickNews>[1]>["runner"] & object>[0][] = []
@@ -273,7 +399,8 @@ describe("pickNews", () => {
         runner: async ({ prompt }) => {
           const taste = /--taste (\S+)/.exec(prompt)?.[1] ?? ""
           const exclude = /--exclude (\S+)/.exec(prompt)?.[1] ?? ""
-          seen = { prompt, taste: await readFile(taste, "utf8"), exclude }
+          // the first ask; a re-ask appends --redo and is its own test
+          seen ??= { prompt, taste: await readFile(taste, "utf8"), exclude }
           return json(STORY)
         },
       },
@@ -293,8 +420,10 @@ describe("pickNews", () => {
       let taste = ""
       await pickNews(opts, {
         runner: async (a) => {
-          prompt = a.prompt
-          taste = await readFile(/--taste (\S+)/.exec(a.prompt)![1]!, "utf8")
+          if (prompt === "") {
+            prompt = a.prompt
+            taste = await readFile(/--taste (\S+)/.exec(a.prompt)![1]!, "utf8")
+          }
           return json(STORY)
         },
       })
@@ -321,8 +450,103 @@ describe("pickNews", () => {
 
   it("clamps an out-of-range count before asking", async () => {
     let prompt = ""
-    await pickNews({ count: 99 }, { runner: async (a) => ((prompt = a.prompt), json(STORY)) })
+    await pickNews({ count: 99 }, { runner: async (a) => ((prompt ||= a.prompt), json(STORY)) })
     expect(prompt).toContain("--count 4")
+  })
+
+  it("sends the digest to the good model, not the forge's cheap one", async () => {
+    const before = { news: process.env.MEME_NEWS_MODEL, relay: process.env.MEME_RELAY_MODEL }
+    try {
+      delete process.env.MEME_NEWS_MODEL
+      // the /forge knob must not drag the news desk down with it
+      process.env.MEME_RELAY_MODEL = "haiku"
+      let model: string | undefined
+      await pickNews({ count: 1 }, { runner: async (a) => ((model = a.model), json(STORY)) })
+      expect(model).toBe(DEFAULT_NEWS_MODEL)
+      expect(DEFAULT_NEWS_MODEL).toBe("opus")
+
+      process.env.MEME_NEWS_MODEL = "fable"
+      await pickNews({ count: 1 }, { runner: async (a) => ((model = a.model), json(STORY)) })
+      expect(model).toBe("fable")
+    } finally {
+      if (before.news === undefined) delete process.env.MEME_NEWS_MODEL
+      else process.env.MEME_NEWS_MODEL = before.news
+      if (before.relay === undefined) delete process.env.MEME_RELAY_MODEL
+      else process.env.MEME_RELAY_MODEL = before.relay
+    }
+  })
+
+  it("asks the desk again, once, with the reason a pick was refused", async () => {
+    const prompts: string[] = []
+    let redo = ""
+    const picks = await pickNews(
+      { count: 2 },
+      {
+        runner: async ({ prompt }) => {
+          prompts.push(prompt)
+          const path = /--redo (\S+)/.exec(prompt)?.[1]
+          if (path === undefined) {
+            // one good pick, one whose captions are about nothing
+            return json(STORY, { ...SECOND, captions: ["when you ship on a friday", "oh no"] })
+          }
+          redo = await readFile(path, "utf8")
+          return json({ ...SECOND, topic: "sports", templateId: "gru-s-plan", shape: "predictable" })
+        },
+      },
+    )
+    expect(prompts).toHaveLength(2)
+    expect(prompts[0]).toBe("/meme-news --json --count 2")
+    // only the missing slot is re-asked for
+    expect(prompts[1]).toMatch(/^\/meme-news --json --count 1 --redo \S+\/redo\.md$/)
+    expect(redo).toMatch(/share not one name/)
+    expect(redo).toContain(STORY.title)
+    expect(picks).toHaveLength(2)
+    expect(picks[1]?.templateId).toBe("gru-s-plan")
+  })
+
+  it("does not re-ask when every pick passes", async () => {
+    let calls = 0
+    await pickNews({ count: 2 }, { runner: async () => ((calls += 1), json(STORY, SECOND)) })
+    expect(calls).toBe(1)
+  })
+
+  it("re-asks after an answer that was not JSON at all, and keeps what comes back", async () => {
+    const prompts: string[] = []
+    const picks = await pickNews(
+      { count: 1 },
+      {
+        runner: async ({ prompt }) => {
+          prompts.push(prompt)
+          return prompt.includes("--redo") ? json(STORY) : "I could not find any news today."
+        },
+      },
+    )
+    expect(prompts).toHaveLength(2)
+    expect(picks).toHaveLength(1)
+  })
+
+  it("ships the refused picks rather than nothing when the redo fails too", async () => {
+    // a flawed meme beats a silent morning; the journal carries the reason
+    const flat = { ...STORY, captions: ["when you ship on a friday", "oh no"] }
+    const picks = await pickNews({ count: 1 }, { runner: async () => json(flat) })
+    expect(picks).toHaveLength(1)
+    expect(picks[0]?.title).toBe(STORY.title)
+  })
+
+  it("removes the redo file with the rest of the temp dir", async () => {
+    let path = ""
+    await pickNews(
+      { count: 2 },
+      {
+        runner: async ({ prompt }) => {
+          const p = /--redo (\S+)/.exec(prompt)?.[1]
+          if (p !== undefined) path = p
+          return json(STORY)
+        },
+      },
+    )
+    expect(path).not.toBe("")
+    expect(await readFile(path, "utf8").catch(() => null)).toBeNull()
   })
 
   it("surfaces a runner failure", async () => {
@@ -348,17 +572,21 @@ describe("digest", () => {
     )
     expect(result.errors).toEqual([])
     expect(result.items).toHaveLength(2)
+    // exactly the wire Binary codes against — and `shape`/`why`, the desk's
+    // working, are NOT on it: they are for the journal and the relay's check
     expect(result.items[0]).toEqual({
       title: STORY.title,
       blurb: STORY.blurb,
       sourceUrl: STORY.sourceUrl,
       topic: "tech",
       templateId: "this-is-fine",
-      captions: ["everything is on fire", "this is fine"],
+      captions: STORY.captions,
       slug: "slug-1",
       url: "https://meme.example/m/slug-1.png",
       shareUrl: "https://meme.example/m/slug-1",
     })
+    expect(result.items[0]).not.toHaveProperty("shape")
+    expect(result.items[0]).not.toHaveProperty("why")
   })
 
   it("tags each wall item news + topic + a sanitized source", async () => {
@@ -402,7 +630,7 @@ describe("digest", () => {
       pngBytes: Buffer.alloc(0),
     })
     const result = await digest({ count: 1 }, { runner: async () => json(STORY), forgePick })
-    expect(result.items[0]?.captions).toEqual(["everything is on fire", "this is fine", ""])
+    expect(result.items[0]?.captions).toEqual([...STORY.captions, ""])
   })
 
   it("returns the survivors and one line per failure", async () => {

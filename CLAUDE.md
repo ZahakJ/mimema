@@ -82,6 +82,16 @@ JetBrains Mono, meme voice **Anton** (open Impact stand-in).
   it never overwrites them. A zone's `placeholder` is the zone's *meaning*
   (never "TOP TEXT") — the forge shows it and the `/meme` skill picks captions
   by it; `scripts/layouts.ts` is the one loader and it refuses generic ones.
+- **`scripts/meanings.json` is what a template *says*** — one hand-written line
+  per recognisable template plus the joke `shapes` its picture can carry
+  (`irony|contrast|predictable|overreaction|same-thing|escalation|denial|mockery`,
+  the vocabulary in `scripts/meanings.ts`, which both skills and `relay/digest.ts`
+  share). A name is not a meaning: "It's Happening" is not for a thing that
+  happened, and picking by the words in a filename is the whole reason the news
+  memes stopped being about the news. Deliberately partial (~85 of ~270) — a
+  meaning you are not sure of is worse than none, and an id that no longer
+  exists in the catalog simply never prints, because the skill joins this onto
+  the live catalog rather than replacing it.
 - Template dedup is **name-based and therefore blind**: the two packs ship the
   same picture under different titles ("Two Buttons"/"Daily Struggle",
   "Bell Curve"/"Midwit"). `scripts/duplicates.ts` is the hand-curated,
@@ -161,7 +171,9 @@ directory and Mimema is unchanged.
   `claude -p "/meme-news --json --count N [--exclude <file>]"` with
   `WebSearch WebFetch` added to the picker's tools and a **300s** timeout, then
   puts every pick through `forgePick()` — so a digest meme and a chat meme come
-  out of the same render. Partial success is the contract: a story that won't
+  out of the same render. Model: **`MEME_NEWS_MODEL`, default `opus`** —
+  `MEME_RELAY_MODEL` deliberately does NOT reach the desk, so the cheap
+  room-triggered forge and the twice-daily digest are priced separately. Partial success is the contract: a story that won't
   forge is one line in `errors` and the rest still ship; **500** only when zero
   items survive. **429** `{error: "busy", retryAfterMs}` — one digest at a time
   and *no* waiting line (it takes minutes), a plain flag rather than the Gate.
@@ -182,6 +194,19 @@ directory and Mimema is unchanged.
   prior, not a rule, and never re-picks a title that appears in it. No taste →
   no flag → the skill behaves exactly as before. Nothing is trained; Binary
   owns the memory and re-sends it every day.
+- **The desk shows its working, and the relay checks it.** `/meme-news` also
+  returns `shape` (the story's joke shape, named *before* a template is chosen)
+  and `why` (one line: which story beat went in which zone). Neither reaches
+  Binary — `DigestItem` drops them — but `vetPicks()` checks them with no model
+  and no network: captions that share not one name, number or product with their
+  own title+blurb are refused; so is a template whose `scripts/meanings.json`
+  shapes don't include the stated `shape`; so is a repeated template or topic
+  inside one digest. Refused picks go back to the desk **exactly once**, as a
+  `--redo` file in the same mkdtemp dir; if that pass fails too the refused picks
+  ship anyway (a flawed meme beats a silent morning) with the reason logged. The
+  check is a **floor, not a critic** — a test pins it against the memes actually
+  posted in September, all of which pass; if a change starts rejecting those it
+  has become a taste test. Every pick and rejection is one journal line.
 - `forge()` is `pickMeme()` + `forgePick()`; the digest reuses the second half
   with picks from a different skill. Keep them separately callable — that split
   is what stops a second render path from growing.

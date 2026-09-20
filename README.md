@@ -211,12 +211,31 @@ journal. Nothing else.
 `POST /digest` is the same pipe pointed at the news. A headless Claude session
 runs [the repo's `/meme-news` skill](.claude/skills/meme-news/SKILL.md) — a
 handful of web searches across tech, internet drama, sports, culture, world and
-science — picks the `count` stories that are actually *meme-able* (an irony, a
-contrast, an overreaction, an "everyone saw this coming"), and writes each one a
-forum-post `title`, a plain two-sentence `blurb` naming the source, the real
-`sourceUrl`, a `topic`, and a template + captions. Every pick then goes through
-the ordinary forge, so a digest meme is rendered by the same `renderMeme` as a
-hand-made one, and lands on the wall tagged `relay`, `news` and its topic.
+science — picks the `count` stories that are actually *meme-able*, reads the
+article rather than the headline, names the story's **joke shape** before it
+looks at a template, and writes each one a forum-post `title`, a plain
+two-sentence `blurb` naming the source, the real `sourceUrl`, a `topic`, and a
+template + captions. Every pick then goes through the ordinary forge, so a
+digest meme is rendered by the same `renderMeme` as a hand-made one, and lands
+on the wall tagged `relay`, `news` and its topic.
+
+The desk also hands back its working — `shape` (one of `irony`, `contrast`,
+`predictable`, `overreaction`, `same-thing`, `escalation`, `denial`, `mockery`)
+and a one-line `why` naming which story beat went in which zone. `vetPicks()` in
+`relay/digest.ts` checks it without a model: a pick whose captions share not one
+name, number or product with its own headline is refused, so is a template whose
+curated meaning (`scripts/meanings.json`) cannot carry the shape the desk
+claimed, and so is a second story on a topic or template already used. Refused
+picks go back to the desk **once**, as a `--redo` file naming each reason; if the
+second pass fails too the refused picks ship anyway with the reason in the
+journal, because a flawed meme beats a silent morning. Every pick and every
+rejection is one line in `journalctl --user -u meme-relay`.
+
+`scripts/meanings.json` is the other half of that: a hand-written line per
+recognisable template saying **what the picture says**, plus the shapes it can
+carry. The skill joins it onto the live catalog in its Step 1, so a template is
+chosen by meaning rather than by the words in its name — which is what "It's
+Happening" kept getting picked for.
 
 `exclude` is a list of titles or URLs already posted recently — the relay keeps
 no memory, so the caller (Binary) does, and passes it in; it reaches the skill
@@ -267,7 +286,8 @@ publishes through the public API like any other client.
 | `MEME_RELAY_PORT` | `8006` | Loopback port the daemon listens on. |
 | `MEME_ORIGIN` | `http://127.0.0.1:8001` | Where the relay reads the catalog and posts the meme. |
 | `MEME_PUBLIC_ORIGIN` | `https://meme.avicenna.space` | Only used to absolutize the relative `url`/`shareUrl` the API returns, for the chat link. |
-| `MEME_RELAY_MODEL` | `sonnet` | Passed to `claude --model`. Anyone in the room can trigger a forge, so the default is the cheap model; a bigger one costs ~10x per meme. |
+| `MEME_RELAY_MODEL` | `sonnet` | Model for `/forge` only. Anyone in the room can trigger a forge, so the default is the cheap model; a bigger one costs ~10x per meme. |
+| `MEME_NEWS_MODEL` | `opus` | Model for `/digest`. The news desk runs twice a day at most and the whole forum reads it, so it gets the good model — and it is set separately so the cheap on-demand forge is not dragged along. |
 | `MEME_RELAY_COOLDOWN_MS` | `0` (off) | Optional per-`chatId` backstop. Who may forge and how often is Binary's job (per-user cooldown + daily cap, owners exempt); the daemon only serializes forges. |
 
 **2. Test the AI half without spending a browser** — write a few fake chat lines

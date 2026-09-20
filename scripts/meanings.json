@@ -1,0 +1,338 @@
+{
+  "american-chopper-argument": {
+    "says": "a shouted argument escalating across six panels until someone throws a chair",
+    "shapes": ["escalation"]
+  },
+  "anakin-padme-4-panel": {
+    "says": "a happy promise, a follow-up question, and the smile draining away when no answer comes",
+    "shapes": ["predictable", "denial"]
+  },
+  "and-it-s-gone": {
+    "says": "the money is handed over and it is already gone",
+    "shapes": ["predictable"]
+  },
+  "always-has-been": {
+    "says": "an astronaut pulls a gun on the one who just noticed the thing was always this way",
+    "shapes": ["irony"]
+  },
+  "bad-luck-brian": {
+    "says": "the good thing happens and it immediately goes wrong for this one person",
+    "shapes": ["irony", "predictable"]
+  },
+  "batman-slapping-robin": {
+    "says": "Robin begins the wrong take and is slapped before he finishes it",
+    "shapes": ["mockery"]
+  },
+  "bell-curve": {
+    "says": "the idiot and the genius land on the same simple answer; the midwit in the middle has an elaborate wrong one",
+    "shapes": ["same-thing"]
+  },
+  "bernie-sanders-once-again-asking": {
+    "says": "once again asking for the thing nobody is ever going to hand over",
+    "shapes": ["predictable"]
+  },
+  "blank-nut-button": {
+    "says": "a hand slams the one big button this person always slams, whatever the question was",
+    "shapes": ["predictable"]
+  },
+  "boardroom-meeting-suggestion": {
+    "says": "ideas go round the table and the honest one gets thrown out the window",
+    "shapes": ["predictable", "denial"]
+  },
+  "buff-doge-vs-cheems": {
+    "says": "the muscular dog of the past against the small trembling dog of the present",
+    "shapes": ["contrast"]
+  },
+  "captain-hindsight": {
+    "says": "the hero who flies in after the disaster to explain what should have been done",
+    "shapes": ["irony", "mockery"]
+  },
+  "change-my-mind": {
+    "says": "a man at a folding table with a sign stating a take, daring the internet to argue",
+    "shapes": ["mockery"]
+  },
+  "clown-applying-makeup": {
+    "says": "four steps of putting on clown makeup — each decision makes the person more of a clown",
+    "shapes": ["escalation"]
+  },
+  "condescending-wonka": {
+    "says": "tell me more about the thing you obviously know nothing about",
+    "shapes": ["mockery"]
+  },
+  "confused-gandalf": {
+    "says": "a wizard stops mid-sentence with no memory of this place — the explanation that loses everyone",
+    "shapes": ["irony", "mockery"]
+  },
+  "daily-struggle": {
+    "says": "a sweating man cannot choose which of two buttons to press, and he has to press one",
+    "shapes": ["contrast"]
+  },
+  "disaster-girl": {
+    "says": "a small girl smiles at the camera while the house burns behind her — the culprit enjoying it",
+    "shapes": ["irony"]
+  },
+  "distracted-boyfriend": {
+    "says": "a man turns his head at a new temptation while the partner he committed to glares",
+    "shapes": ["contrast"]
+  },
+  "drake-hotline-bling": {
+    "says": "Drake waves the first thing away and points approvingly at the second — the same picture as drakeposting",
+    "shapes": ["contrast"]
+  },
+  "drakeposting": {
+    "says": "Drake waves the first thing away and points approvingly at the second: a preference stated without an argument",
+    "shapes": ["contrast"]
+  },
+  "epic-handshake": {
+    "says": "two arms that look like enemies clasp over the one thing they quietly agree on",
+    "shapes": ["same-thing"]
+  },
+  "evil-kermit": {
+    "says": "the hooded double whispers the bad idea the other one was going to do anyway",
+    "shapes": ["predictable"]
+  },
+  "expanding-brain": {
+    "says": "four ever more cosmic brains: a take getting dumber while presenting itself as more enlightened",
+    "shapes": ["escalation"]
+  },
+  "first-world-problems": {
+    "says": "a woman in tears over something completely trivial",
+    "shapes": ["overreaction"]
+  },
+  "flex-tape": {
+    "says": "an enormous structural problem slapped over with one strip of tape",
+    "shapes": ["denial"]
+  },
+  "futurama-fry": {
+    "says": "a narrowed-eye squint: not sure if the impressive thing or just the mundane one",
+    "shapes": ["irony"]
+  },
+  "grant-gustin-next-to-oliver-queen-s-grave": {
+    "says": "a grinning man poses next to the grave of the thing he replaced",
+    "shapes": ["irony", "contrast"]
+  },
+  "gru-s-plan": {
+    "says": "a four-step plan on a flipchart; step three is the consequence the planner did not read, and panel four is him reading it again",
+    "shapes": ["irony", "predictable"]
+  },
+  "gus-fring-we-are-not-the-same": {
+    "says": "two things that look alike, stated flatly not to be the same",
+    "shapes": ["contrast"]
+  },
+  "guy-hammering-nails-into-sand": {
+    "says": "a man hammering nails into loose sand — hard work that accomplishes nothing",
+    "shapes": ["denial", "mockery"]
+  },
+  "hide-the-pain-harold": {
+    "says": "an old man smiles for the camera while plainly suffering: the cheerful claim on top, the pain underneath",
+    "shapes": ["denial"]
+  },
+  "i-am-the-captain-now": {
+    "says": "the hijacker tells the captain to look at him — he is the captain now",
+    "shapes": ["contrast"]
+  },
+  "i-feel-like-i-m-taking-crazy-pills": {
+    "says": "the only person in the room who thinks the obvious madness is madness",
+    "shapes": ["irony"]
+  },
+  "inhaling-seagull": {
+    "says": "a gull winding up to screech the thing everyone in the room is already thinking",
+    "shapes": ["overreaction"]
+  },
+  "is-this-a-pigeon": {
+    "says": "a man points at a butterfly and confidently calls it something it plainly is not",
+    "shapes": ["irony", "same-thing"]
+  },
+  "it-s-happening": {
+    "says": "Ron Paul throws both arms up in front of lasers — the long-promised thing finally, wildly arriving",
+    "shapes": ["overreaction"]
+  },
+  "jim-halpert-pointing-to-whiteboard": {
+    "says": "a man points at a whiteboard on which he has written the blindingly obvious thing",
+    "shapes": ["mockery"]
+  },
+  "khaby-lame-shrug": {
+    "says": "wordless palms-up at someone who just overcomplicated a trivial thing",
+    "shapes": ["mockery"]
+  },
+  "kombucha-girl": {
+    "says": "the first sip: intrigued, then repulsed, then intrigued again",
+    "shapes": ["contrast"]
+  },
+  "left-exit-12-off-ramp": {
+    "says": "a car swerves across the line at the last second to take the tempting exit instead of the sensible road",
+    "shapes": ["predictable", "irony"]
+  },
+  "marked-safe-from": {
+    "says": "a social banner announcing you are marked safe from the thing everyone was panicking about",
+    "shapes": ["mockery", "overreaction"]
+  },
+  "matrix-morpheus": {
+    "says": "what if I told you — a revelation delivered to someone who should already have known",
+    "shapes": ["irony"]
+  },
+  "mocking-spongebob": {
+    "says": "someone's take repeated back at them in wobbly mocking capitals",
+    "shapes": ["mockery"]
+  },
+  "monkey-puppet": {
+    "says": "a puppet's slow sideways glance at the camera when the incriminating thing is said",
+    "shapes": ["irony"]
+  },
+  "mother-ignoring-kid-drowning-in-a-pool": {
+    "says": "a parent attends to the small pleasant thing while the real one drowns beside them",
+    "shapes": ["denial", "contrast"]
+  },
+  "nothing-to-do-here": {
+    "says": "a man slides back down the ladder away from a problem he has just made worse",
+    "shapes": ["denial"]
+  },
+  "one-does-not-simply": {
+    "says": "one does not simply do the thing everyone keeps insisting is easy",
+    "shapes": ["irony"]
+  },
+  "oprah-you-get-a": {
+    "says": "you get one, and you get one — everybody in the building gets one",
+    "shapes": ["escalation"]
+  },
+  "panik-kalm-panik": {
+    "says": "panic, then relief, then worse panic as the second detail lands",
+    "shapes": ["escalation"]
+  },
+  "pawn-stars-best-i-can-do": {
+    "says": "an offer insultingly far below the asking price: best I can do is that",
+    "shapes": ["contrast"]
+  },
+  "pepperidge-farm-remembers": {
+    "says": "everybody has moved on from the thing; Pepperidge Farm remembers",
+    "shapes": ["contrast"]
+  },
+  "principal-skinner": {
+    "says": "am I the one who is out of touch? no, it is everyone else who is wrong",
+    "shapes": ["irony", "denial"]
+  },
+  "running-away-balloon": {
+    "says": "a child chases a balloon labelled the thing they are never getting back",
+    "shapes": ["irony"]
+  },
+  "say-the-line-bart-simpsons": {
+    "says": "Bart is made to say the line everyone expects, says it, and the room applauds",
+    "shapes": ["predictable"]
+  },
+  "scooby-doo-mask-reveal": {
+    "says": "the mask comes off the monster and it was the obvious culprit the whole time",
+    "shapes": ["predictable", "same-thing"]
+  },
+  "see-nobody-cares": {
+    "says": "a teacher wheels in a television to show that nobody cares",
+    "shapes": ["mockery"]
+  },
+  "shut-up-and-take-my-money": {
+    "says": "the wallet is out before the pitch is even finished",
+    "shapes": ["overreaction"]
+  },
+  "sleeping-shaq": {
+    "says": "he sleeps straight through the enormous thing and sits bolt upright for the trivial one",
+    "shapes": ["contrast", "overreaction"]
+  },
+  "soldier-protecting-sleeping-child": {
+    "says": "the large armed thing standing over the small sleeping thing, shielding it from the threat",
+    "shapes": ["contrast"]
+  },
+  "spiderman-pointing-at-spiderman": {
+    "says": "two identical Spider-Men accuse each other — both sides of the fight are doing the same thing",
+    "shapes": ["same-thing"]
+  },
+  "stonks": {
+    "says": "a suited mannequin in front of a rising arrow, calling a catastrophic decision a financial masterstroke",
+    "shapes": ["irony"]
+  },
+  "stop-it-get-some-help": {
+    "says": "a flat, weary order to stop it and get some help",
+    "shapes": ["mockery"]
+  },
+  "success-kid": {
+    "says": "a toddler's clenched fist over a very small victory",
+    "shapes": ["contrast"]
+  },
+  "surprised-pikachu": {
+    "says": "someone does the thing, the obvious consequence arrives, and they are astonished",
+    "shapes": ["predictable"]
+  },
+  "that-would-be-great": {
+    "says": "a boss leans on the desk: yeah, if you could just do the impossible thing, that'd be great",
+    "shapes": ["overreaction", "denial"]
+  },
+  "the-rock-driving": {
+    "says": "a passenger's head turning very slowly towards the driver who just said the thing",
+    "shapes": ["irony"]
+  },
+  "the-scroll-of-truth": {
+    "says": "an explorer finally finds the scroll of truth, reads it, and hurls it away",
+    "shapes": ["denial"]
+  },
+  "they-don-t-know": {
+    "says": "a man alone against the party wall, thinking about the thing nobody else in the room cares about",
+    "shapes": ["irony"]
+  },
+  "they-re-the-same-picture": {
+    "says": "asked to spot the difference between two photos: they are the same picture",
+    "shapes": ["same-thing"]
+  },
+  "this-is-fine": {
+    "says": "a dog sits in a burning room and says this is fine",
+    "shapes": ["denial"]
+  },
+  "trade-offer": {
+    "says": "a man proposes a deal — I receive this, you receive that — and it is wildly lopsided",
+    "shapes": ["contrast"]
+  },
+  "tuxedo-winnie-the-pooh": {
+    "says": "plain Pooh says the ordinary version, tuxedo Pooh says the identical thing dressed up as sophistication",
+    "shapes": ["same-thing", "mockery"]
+  },
+  "two-guys-on-a-bus": {
+    "says": "two men on the same bus: one faces a beautiful view, the other a concrete wall",
+    "shapes": ["contrast"]
+  },
+  "uno-draw-25-cards": {
+    "says": "told to do one simple honest thing or draw 25 cards, and he draws the 25 cards",
+    "shapes": ["predictable"]
+  },
+  "vince-mcmahon-reaction": {
+    "says": "escalating levels of being blown away, each reveal bigger than the last",
+    "shapes": ["escalation"]
+  },
+  "waiting-skeleton": {
+    "says": "a skeleton still sitting on the bench, waiting for the thing that never came",
+    "shapes": ["predictable"]
+  },
+  "we-have-food-at-home": {
+    "says": "the exciting thing outside versus the sad approximation waiting at home",
+    "shapes": ["contrast"]
+  },
+  "who-killed-hannibal": {
+    "says": "a man shoots someone, then turns to the camera to ask why they would do that",
+    "shapes": ["irony", "denial"]
+  },
+  "woman-yelling-at-cat": {
+    "says": "a furious accusation on the left, a cat entirely unbothered by it on the right",
+    "shapes": ["overreaction"]
+  },
+  "x-all-the-y": {
+    "says": "a manic figure declaring they will do the thing to all of the things",
+    "shapes": ["escalation"]
+  },
+  "x-x-everywhere": {
+    "says": "one character gestures at the horizon for another: that thing, that thing everywhere",
+    "shapes": ["escalation"]
+  },
+  "y-u-no-guy": {
+    "says": "a stretched face demanding to know why you will not just do the obvious thing",
+    "shapes": ["mockery"]
+  },
+  "you-were-the-chosen-one": {
+    "says": "a betrayed mentor shouting that this was supposed to be the one that fixed it",
+    "shapes": ["irony", "contrast"]
+  }
+}
