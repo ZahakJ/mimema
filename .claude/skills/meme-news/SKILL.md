@@ -80,9 +80,21 @@ spelling; copy it from this list.
 
 ## Step 2 — find today's stories
 
-Run **4–6 WebSearch calls** across a spread, not one search five ways. One
-query per lane, minimum four lanes:
+Run **5–7 WebSearch calls** across a spread, not one search five ways. One
+query per lane, minimum four lanes — and the FIRST lane is always the argument
+of the day:
 
+- **the outrage lane** — what people are furious about *today*: a company or
+  institution saying the quiet part out loud, on the record. A publisher
+  arguing in court that buying a game never meant owning it; a platform
+  changing its terms and telling users to deal with it; a CEO's statement
+  that became the day's quote-tweet. Search for it directly — `"backlash"`,
+  `"sued"`, `"lawsuit argues"`, `"furious"`, `"you don't own"`, `"terms of
+  service"`, `"walks back"` with today's date — and look where arguments
+  surface first: `WebFetch https://news.ycombinator.com/` (the front page),
+  a `site:reddit.com` search for the day's top threads (r/gaming,
+  r/technology, r/all). A story that is *only* on the wires is news; a story
+  that is on the front page of Hacker News with 800 comments is a meme.
 - tech / AI (launches, outages, lawsuits, benchmarks, layoffs)
 - internet & creator drama (platforms, streamers, a policy everyone hates)
 - sports (an upset, a transfer, a meltdown, a refereeing decision)
@@ -97,6 +109,15 @@ September 13 2026", and check the publish date on each result; search engines
 happily surface last week's story for a vague query. A result dated more than
 two days ago is not today's news — drop it, however meme-able. A digest of stale
 stories is the one failure the forum will notice.
+
+**One exception, for the outrage lane only:** a controversy is fresh for as
+long as people are still arguing it. A court filing from ten days ago that is
+still the top thread today (Sony telling a court that "reasonable consumers"
+know they don't own their digital games, and that if they did only one person
+could buy GTA 6) beats a wire story from this morning that nobody is talking
+about. Take at most ONE such story per digest, only if it is not on the
+excluded list, and say in the blurb when the thing happened ("in an August 21
+filing reported by…") so the post never pretends it is today's.
 
 **Then read the story.** Before a story is a candidate, `WebFetch` the article
 and take from it: who did what, the number, the product name, the quote, and
@@ -140,6 +161,13 @@ is not a candidate:
 3. **Does the funny part survive being explained to someone outside the field?**
    A CVE number and a supply-chain mitigation are not a joke for a Discord
    forum; "the tool that checks your code got fooled by a folder name" is.
+
+When more candidates pass than you need, **rank by heat, not by importance**:
+a company or an institution saying an outrageous thing on the record (a court
+filing, a statement, a policy) beats an interesting result every time — the
+room did not come for the interesting result. The consumer-rights fight, the
+platform that told its users to deal with it, the rich saying the quiet part
+out loud: those first, then the rest.
 
 Rules:
 
