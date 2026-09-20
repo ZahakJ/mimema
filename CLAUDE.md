@@ -224,6 +224,9 @@ directory and Mimema is unchanged.
   `window.__mimema.exportPng()`. That URL/hook contract is the client's half —
   change it there and `relay/forge.ts` must change with it. Captions are one `c`
   per zone in zone order, spaces as `%20` (never `+`).
+- `runClaude` logs each run's `total_cost_usd` and duration to stderr — nothing
+  else records it, and "was opus worth it for the digest" is otherwise
+  unanswerable after the fact.
 - `pickMeme()` takes an injectable `ClaudeRunner`, which is why forge is
   testable without spending a model call. `npm run relay:forge -- ctx.txt
   --dry-run` stops after the pick — the cheap e2e for the AI half.
