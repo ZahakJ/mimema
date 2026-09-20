@@ -160,7 +160,7 @@ export const runClaude: ClaudeRunner = ({ prompt, cwd, timeoutMs, model, allowed
       clearTimeout(timer)
       if (timedOut) return reject(new Error(`claude timed out after ${timeoutMs}ms`))
       if (code !== 0) return reject(new Error(`claude exited ${code}: ${err.trim().slice(0, 500)}`))
-      let envelope: { result?: unknown; is_error?: unknown }
+      let envelope: { result?: unknown; is_error?: unknown; total_cost_usd?: unknown; duration_ms?: unknown }
       try {
         envelope = JSON.parse(out)
       } catch {
@@ -171,6 +171,12 @@ export const runClaude: ClaudeRunner = ({ prompt, cwd, timeoutMs, model, allowed
       }
       if (typeof envelope.result !== "string") {
         return reject(new Error("claude returned no result field"))
+      }
+      // What the run cost, on stderr for the journal. Nothing else records it,
+      // and "is the digest worth opus" is otherwise unanswerable after the fact.
+      if (typeof envelope.total_cost_usd === "number") {
+        const secs = typeof envelope.duration_ms === "number" ? Math.round(envelope.duration_ms / 1000) : "?"
+        console.error(`[relay] ${model ?? DEFAULT_MODEL} run: $${envelope.total_cost_usd.toFixed(3)}, ${secs}s`)
       }
       resolve(envelope.result)
     })
