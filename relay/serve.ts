@@ -2,11 +2,8 @@
 /**
  * The relay daemon: a loopback HTTP front door for the forge.
  *
- * Mimema has no chat surface of its own. Binary — the user's Go Discord bot —
- * gathers the transcript, formats it, and POSTs it here; this process owns the
- * model call, the headless render and the INVITE_KEY. That split is the point:
- * the secret and the browser stay on this side of localhost, and the chat
- * adapter stays a separate program that only needs to speak JSON.
+ * A chat client gathers and formats the transcript and POSTs it here; this
+ * process owns the model call, the headless render and the INVITE_KEY.
  *
  *   GET  /healthz → "ok"
  *   POST /forge   → { context, source?, chatId? } → { slug, url, shareUrl,
@@ -35,7 +32,7 @@ import {
 } from "./digest.ts"
 
 export const DEFAULT_PORT = 8006
-/** Binary formats the transcript; 256 KB is far more chat than the picker can read */
+/** 256 KB is far more chat than the picker can read */
 export const MAX_BODY_BYTES = 256 * 1024
 /** a source tag lands on a public wall item, so it is a slug or it is nothing */
 export const SOURCE_RE = /^[a-z0-9-]{1,32}$/
@@ -97,7 +94,7 @@ function readBody(req: http.IncomingMessage): Promise<string> {
     req.on("data", (chunk: Buffer) => {
       size += chunk.length
       if (size > MAX_BODY_BYTES) {
-        // 400, not 413: the contract with Binary is 200/400/429/500 and nothing else
+        // 400, not 413: the wire is 200/400/429/500 only
         reject(new BadRequest(`body too large (max ${MAX_BODY_BYTES} bytes)`))
         req.destroy()
         return
@@ -153,9 +150,8 @@ export function parseDigestRequest(raw: string): DigestRequest {
   if (exclude !== undefined && (!Array.isArray(exclude) || exclude.some((e) => typeof e !== "string"))) {
     throw new BadRequest("exclude must be an array of strings")
   }
-  // the taste fields are advice, not orders: an over-long brief is trimmed and a
-  // malformed reaction is dropped, because neither should cost the room its news.
-  // Only the wrong *type* is a 400 — that is a client bug worth surfacing.
+  // an over-long brief is trimmed and a malformed reaction dropped; only the
+  // wrong type is a 400
   if (interests !== undefined && interests !== null && typeof interests !== "string") {
     throw new BadRequest("interests must be a string")
   }
@@ -189,10 +185,8 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
   // that arrives mid-run is told to come back rather than parked on a socket
   let digestRunning = false
   const gate =
-    // Who may forge and how often is the client's call (Binary knows Discord users
-    // and owners; the daemon only sees a chatId). The daemon's per-chat cooldown
-    // is therefore off unless MEME_RELAY_COOLDOWN_MS asks for a backstop; the
-    // one-at-a-time queue is the resource guard and always stays.
+    // per-user limits belong to the client; the per-chat cooldown is off unless
+    // MEME_RELAY_COOLDOWN_MS sets one. The one-at-a-time queue always applies.
     deps.gate ?? new Gate({ cooldownMs: Number(process.env.MEME_RELAY_COOLDOWN_MS) || 0 })
 
   return (req, res) => {
@@ -256,7 +250,7 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
           await rm(dir, { recursive: true, force: true }).catch(() => undefined)
         }
       }, chatId)
-      // pngBytes stays here: Binary fetches the image from the wall URL
+      // pngBytes stays here: the client fetches the image from the wall URL
       const { pngBytes: _png, ...dto } = result
       console.log(`[relay] ${chatId} → ${result.templateId} → ${result.shareUrl}`)
       send(res, 200, dto)

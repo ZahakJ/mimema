@@ -13,7 +13,7 @@ import type { TemplateDto, ItemDto } from "../shared/schema.ts"
 
 export const REPO_ROOT = path.join(import.meta.dirname, "..")
 export const CLAUDE_TIMEOUT_MS = 180_000
-/** anyone in the room can trigger a forge, so the default is the cheap model; MEME_RELAY_MODEL overrides */
+/** model for /forge; MEME_RELAY_MODEL overrides */
 export const DEFAULT_MODEL = "sonnet"
 export const DOC_READY_TIMEOUT_MS = 30_000
 

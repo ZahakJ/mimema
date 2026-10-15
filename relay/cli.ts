@@ -5,11 +5,9 @@
  *     [--interests "<text>"] [--feedback <file.json>]
  *
  * The whole pipe on one file of chat, printed as JSON. --dry-run stops after
- * the picker — no browser, no wall, no INVITE_KEY — which makes it the cheap
- * end-to-end test of the AI half. --digest runs the news desk instead: today's
- * stories, each with a forum post and a meme. --interests and --feedback are
- * the taste the daemon would get from Binary: a standing brief, and a JSON
- * array of `{title, topic, up, down}` reactions to earlier posts.
+ * the picker: no browser, no wall, no INVITE_KEY. --digest runs the news desk
+ * instead. --interests and --feedback are the /digest taste fields: a standing
+ * brief, and a JSON array of `{title, topic, up, down}` reactions.
  */
 import { readFile } from "node:fs/promises"
 import path from "node:path"
@@ -45,7 +43,7 @@ async function main(): Promise<void> {
     const feedbackFile = flag("--feedback")
     if (feedbackFile !== undefined) {
       const parsed: unknown = JSON.parse(await readFile(path.resolve(feedbackFile), "utf8"))
-      // the same shape Binary sends: a bare array, or the whole request body
+      // a bare array, or a whole /digest request body
       const list = Array.isArray(parsed) ? parsed : (parsed as { feedback?: unknown } | null)?.feedback
       if (!Array.isArray(list)) throw new Error(`${feedbackFile}: expected a JSON array of {title, topic, up, down}`)
       opts.feedback = cleanFeedback(list)

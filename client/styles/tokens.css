@@ -109,7 +109,7 @@ body {
   );
 }
 
-/* one accent per instrument — blood crimson. Dark. Epic. */
+/* accent: crimson */
 [data-app='mimema'] {
   --accent-rgb: 237, 49, 63;
 }
