@@ -7,7 +7,37 @@
 
 A self-hosted meme editor and media host: make a meme from a template,
 download the PNG, or publish it to a permanent, hotlinkable URL that unfurls
-in chat apps. Live at <https://meme.avicenna.space>.
+in chat apps. It is meant for a group of friends, a team or a chat server
+that wants its own meme wall: one Node process, one SQLite file, one shared
+key for writing. Live at <https://meme.avicenna.space>.
+
+## Features
+
+- **About 260 templates with hand-placed captions.** The importer pulls the
+  imgflip and memegen.link packs; 115 popular templates carry a curated
+  layout, so Drake's captions land in the right-hand column and Distracted
+  Boyfriend's on the three people, each with a placeholder saying what goes
+  there.
+- **A full editor.** Move, resize and rotate text; five bundled meme fonts;
+  outline and shadow; stickers from a file or pasted from the clipboard; a
+  deep-fry filter; 60 steps of undo. The draft survives a reload.
+- **Exports at native resolution.** The download is re-rendered at the
+  template's own size, so it does not depend on how large the window was.
+- **Permanent links.** A published file lives at `/m/<slug>.<ext>` and never
+  changes; `/m/<slug>` is a share page with OpenGraph and Twitter card tags,
+  so a pasted link previews as the image.
+- **The wall.** Everything published, searchable by title, filterable by tag
+  or template, sortable by reactions, with three emoji reactions anyone can
+  add. Plain uploads (PNG, JPEG, GIF, WebP, MP4, WebM) sit alongside memes.
+- **Your own templates.** `#/add-template` takes any image and lets you draw
+  up to 24 caption zones on it.
+- **Works on a phone.** Below 900 px the forge becomes a canvas with bottom
+  sheets, and the canvas stays visible while you type.
+- **Scriptable.** A JSON API for uploads and listing, and a deep link that
+  loads a template with captions so a headless browser can export the PNG.
+- **Optional text-to-meme relay.** A separate daemon takes a chat transcript
+  or the day's news, has a language model pick the template and write the
+  captions, and publishes the result.
 
 ## Install
 
@@ -20,6 +50,10 @@ cp .env.example .env                             # set INVITE_KEY and PUBLIC_ORI
 npm run build && npm start                       # http://127.0.0.1:8001
 ```
 
+`openssl rand -base64 24` makes a suitable `INVITE_KEY`. For development, run
+`npm run dev:server` (API on :5900) and `npm run dev` (the client on
+<http://localhost:5901>, with hot reload).
+
 ## Use
 
 | | |
@@ -31,11 +65,15 @@ npm run build && npm start                       # http://127.0.0.1:8001
 
 Viewing and making memes need no key. Publishing, uploading, adding templates
 and deleting need `INVITE_KEY`, entered once in the app or sent as the
-`x-meme-key` header.
+`x-meme-key` header:
 
-Published files are served at `/m/<slug>.<ext>`, which never changes, and
-`/m/<slug>` is a share page with OpenGraph tags. PNG, JPEG, GIF, WebP, MP4 and
-WebM are accepted, up to 12 MB for images and 40 MB for video.
+```sh
+curl -H "x-meme-key: $INVITE_KEY" \
+  -F file=@meme.png -F kind=meme -F title="Friday deploys" -F tags=ops,code \
+  http://127.0.0.1:8001/api/items
+```
+
+Uploads are accepted up to 12 MB for images and 40 MB for video.
 
 <p align="center">
   <img src="docs/media/forge.webp" width="400" alt="The forge: template rail on the left, Distracted Boyfriend with three captions on the canvas, text controls on the right">
@@ -48,12 +86,19 @@ WebM are accepted, up to 12 MB for images and 40 MB for video.
 
 ## How it works
 
-- A Hono server, run by Node directly from TypeScript, keeps metadata in SQLite and files on disk under `data/`.
-- One canvas function draws both the preview and the export; the export re-renders at the template's native resolution.
-- Caption zones are rectangles in fractions of the image, placed by hand per template in `scripts/layouts/`.
-- Uploads are typed by their bytes, deduplicated by SHA-256, and given an adjective-noun slug.
-- Writes require one shared key in a custom header; with no CORS, cross-origin writes fail their preflight.
-- An optional daemon, `relay/`, turns a chat transcript or the day's news into a published meme.
+The client is a React app; the server is Hono, run by Node directly from
+TypeScript with no build step, keeping metadata in SQLite and files on disk
+under `data/`. A single canvas function, `renderMeme`, draws both the preview
+and the export. All geometry is stored as fractions of the image (a zone is
+`x, y, w, h` in 0..1, font size a fraction of the image height), so one
+document renders identically at any scale, and export simply draws again at
+native size. Text wraps greedily, then shrinks 8% at a time until it fits its
+box. Uploads are typed by their first bytes rather than the declared content
+type, deduplicated by SHA-256, and given an adjective-noun slug such as
+`mysterious-gazebo`. Writes need the key in a custom header; since the server
+sends no CORS headers, a cross-origin request carrying it fails its preflight.
+The relay never draws memes itself: it opens the forge's deep link in headless
+Chromium and calls the same export the download button uses.
 
 ## Documentation
 
