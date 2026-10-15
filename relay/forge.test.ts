@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { EventEmitter } from "node:events"
+import type { Browser } from "playwright"
 import {
+  browser,
+  claudeResult,
+  closeBrowser,
   dataUrlToBuffer,
   editUrl,
   extractJson,
@@ -238,5 +243,84 @@ describe("postItem", () => {
     await expect(
       postItem(Buffer.from("x"), { title: "t", templateId: "d", tags: [] }, { inviteKey: "wrong" }),
     ).rejects.toThrow(/401/)
+  })
+})
+
+/** a stand-in chromium: connected until killed, then it says so the way playwright does */
+function fakeBrowser(): Browser & { kill(): void } {
+  const events = new EventEmitter()
+  let connected = true
+  return Object.assign(events, {
+    isConnected: () => connected,
+    close: async () => {
+      connected = false
+    },
+    kill() {
+      connected = false
+      events.emit("disconnected")
+    },
+  }) as unknown as Browser & { kill(): void }
+}
+
+describe("browser", () => {
+  afterEach(() => closeBrowser())
+
+  it("reuses one live chromium", async () => {
+    const launch = vi.fn(async () => fakeBrowser())
+    const a = await browser(launch)
+    expect(await browser(launch)).toBe(a)
+    expect(launch).toHaveBeenCalledTimes(1)
+  })
+
+  it("launches a new chromium after the old one was killed", async () => {
+    const first = fakeBrowser()
+    const second = fakeBrowser()
+    const launch = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(second)
+    expect(await browser(launch)).toBe(first)
+    first.kill()
+    expect(await browser(launch)).toBe(second)
+  })
+
+  it("notices a dead chromium even without the disconnected event", async () => {
+    const first = fakeBrowser()
+    const second = fakeBrowser()
+    const launch = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(second)
+    await browser(launch)
+    await first.close()
+    expect(await browser(launch)).toBe(second)
+  })
+
+  it("tries again after a failed launch instead of caching the failure", async () => {
+    const ok = fakeBrowser()
+    const launch = vi.fn().mockRejectedValueOnce(new Error("no chromium")).mockResolvedValueOnce(ok)
+    await expect(browser(launch)).rejects.toThrow(/no chromium/)
+    expect(await browser(launch)).toBe(ok)
+  })
+})
+
+describe("claudeResult", () => {
+  const run = { err: "", timedOut: false, timeoutMs: 1000 }
+
+  it("returns the result of a good run", () => {
+    expect(claudeResult({ ...run, code: 0, out: '{"result":"hi"}' })).toBe("hi")
+  })
+
+  it("says why a run failed when the reason is only on stdout", () => {
+    const out = JSON.stringify({
+      type: "result",
+      is_error: true,
+      result: "You've hit your weekly limit · resets 10am (America/Los_Angeles)",
+    })
+    expect(() => claudeResult({ ...run, code: 1, out })).toThrow(/exited 1: You've hit your weekly limit/)
+  })
+
+  it("keeps stderr when there is some", () => {
+    expect(() => claudeResult({ ...run, code: 2, out: "", err: "unknown option" })).toThrow(
+      /exited 2: unknown option/,
+    )
+  })
+
+  it("names a timeout", () => {
+    expect(() => claudeResult({ ...run, code: null, out: "", timedOut: true })).toThrow(/timed out/)
   })
 })

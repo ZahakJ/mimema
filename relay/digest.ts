@@ -440,6 +440,8 @@ export async function digest(opts: DigestOpts = {}, deps: DigestDeps = {}): Prom
         shareUrl: forged.shareUrl,
       })
     } catch (err) {
+      // Binary gets the short form; the journal gets all of it, on one line
+      note(`failed "${pick.title}": ${(err instanceof Error ? err.message : String(err)).replace(/\s*\n\s*/g, " | ")}`)
       errors.push(`${pick.title}: ${oneLine(err)}`)
     }
   }

@@ -75,6 +75,12 @@ export function cleanSource(raw: unknown): string | null {
   return SOURCE_RE.test(tag) ? tag : null
 }
 
+/** the whole message on one journal line: journalctl splits a multi-line entry apart */
+export function fullLine(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  return msg.replace(/\s*\n\s*/g, " | ").trim()
+}
+
 /** one line, bounded — the caller puts this in a chat message */
 export function oneLine(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
@@ -191,7 +197,7 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
 
   return (req, res) => {
     void handle(req, res).catch((err) => {
-      console.error("[relay] handler:", err)
+      console.error(`[relay] handler: ${fullLine(err)}`)
       if (!res.headersSent) send(res, 500, { error: oneLine(err) })
       else res.end()
     })
@@ -255,7 +261,7 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
       console.log(`[relay] ${chatId} → ${result.templateId} → ${result.shareUrl}`)
       send(res, 200, dto)
     } catch (err) {
-      console.error("[relay] forge failed:", err)
+      console.error(`[relay] forge failed: ${fullLine(err)}`)
       send(res, 500, { error: oneLine(err) })
     }
   }
@@ -290,13 +296,13 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
       })
       if (result.items.length === 0) {
         const why = result.errors[0] ?? "the digest produced nothing"
-        console.error("[relay] digest produced nothing:", result.errors)
+        console.error(`[relay] digest produced nothing: ${result.errors.map(fullLine).join(" | ")}`)
         return send(res, 500, { error: why })
       }
       console.log(`[relay] digest → ${result.items.length} item(s), ${result.errors.length} error(s)`)
       send(res, 200, result)
     } catch (err) {
-      console.error("[relay] digest failed:", err)
+      console.error(`[relay] digest failed: ${fullLine(err)}`)
       send(res, 500, { error: oneLine(err) })
     } finally {
       digestRunning = false

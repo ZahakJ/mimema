@@ -169,7 +169,8 @@ on loopback that takes a chat transcript and gives back a meme:
    gets back `{templateId, captions, title, alt}`,
 3. it renders that **through the app itself**: a headless Chromium opens
    `#/edit/<id>?c=…&c=…` and calls the page's own export, so a relayed meme and
-   a hand-made one come out of the same `renderMeme`,
+   a hand-made one come out of the same `renderMeme` (one Chromium serves the
+   whole process; if it dies, the next render starts a new one),
 4. it POSTs the PNG to `/api/items` with your `INVITE_KEY`, tagged `relay`, and
    answers with the slug and the share link.
 
@@ -228,8 +229,9 @@ curated meaning (`scripts/meanings.json`) cannot carry the shape the desk
 claimed, and so is a second story on a topic or template already used. Refused
 picks go back to the desk **once**, as a `--redo` file naming each reason; if the
 second pass fails too the refused picks ship anyway with the reason in the
-journal, because a flawed meme beats a silent morning. Every pick and every
-rejection is one line in `journalctl --user -u meme-relay`.
+journal, because a flawed meme beats a silent morning. Every pick, rejection
+and failure is one line in `journalctl --user -u meme-relay`; a `claude` run
+that stops on the account's usage limit says so there.
 
 `scripts/meanings.json` is the other half of that: a hand-written line per
 recognisable template saying **what the picture says**, plus the shapes it can
