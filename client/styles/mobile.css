@@ -1,8 +1,5 @@
 /* ═══════════ the phone layer ═══════════
-   Every responsive rule in Mimema lives here, so "how does this look on a
-   phone" is one file, not a scavenger hunt.
-
-   Two axes, deliberately separate:
+   Every responsive rule lives here, on two separate axes:
      @media (max-width: 900px)  — LAYOUT. The three rails of the forge collapse
                                   into a canvas + a tray + bottom sheets, and
                                   the tab bar drops to the thumb.
@@ -318,7 +315,7 @@
   font-size: 17px;
   line-height: 1.1;
 }
-/* ship gets the full gradient — it is the point of the whole app */
+/* ship gets the full gradient */
 .mm-tray__ship {
   border: none;
   background: var(--grad);

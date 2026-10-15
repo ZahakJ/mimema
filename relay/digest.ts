@@ -29,13 +29,7 @@ import {
 export const DIGEST_TIMEOUT_MS = 300_000
 export const DEFAULT_COUNT = 2
 export const MAX_COUNT = 4
-/**
- * The digest runs twice a day at most and the whole forum reads it, so it gets
- * the good model — unlike /forge, which anyone in the room can trigger all
- * afternoon and therefore keeps forge.ts's cheap DEFAULT_MODEL. MEME_NEWS_MODEL
- * overrides this one; MEME_RELAY_MODEL deliberately no longer reaches the desk,
- * so the two halves can be priced separately.
- */
+/** model for /digest; MEME_NEWS_MODEL overrides, MEME_RELAY_MODEL does not apply */
 export const DEFAULT_NEWS_MODEL = "opus"
 /** the picker's tools plus the two the news desk actually needs */
 export const NEWS_TOOLS = ["WebSearch", "WebFetch", ...PICKER_TOOLS]
@@ -43,7 +37,7 @@ export const NEWS_TOOLS = ["WebSearch", "WebFetch", ...PICKER_TOOLS]
 export const TOPICS = ["tech", "internet", "sports", "culture", "world", "science"] as const
 export type Topic = (typeof TOPICS)[number]
 
-/** the taste contract (fixed; Binary codes against it): a standing brief plus reactions */
+/** the taste fields of /digest: a standing brief plus reactions */
 export const MAX_INTERESTS_CHARS = 500
 export const MAX_FEEDBACK = 60
 export const MAX_FEEDBACK_TITLE = 200
@@ -66,11 +60,8 @@ export const digestPickSchema = z.object({
   topic: z.enum(TOPICS),
   templateId: z.string().min(1),
   captions: z.array(z.string()),
-  // shape and why are the desk's working, not the post: the model must name the
-  // story's joke shape BEFORE it names a template, and say which story beat
-  // went in which zone. Asking for the working in the output is the only way to
-  // know it was done — and it is what vetPicks() checks the template against.
-  // Neither reaches Binary; DigestItem drops them.
+  // shape and why are the desk's working, checked by vetPicks() and dropped
+  // from DigestItem
   shape: z.enum(JOKE_SHAPES),
   why: z.string().min(MIN_WHY_CHARS),
 })
@@ -78,7 +69,7 @@ export type DigestPick = z.infer<typeof digestPickSchema>
 
 export const digestSchema = z.object({ items: z.array(digestPickSchema) })
 
-/** what Binary gets: the post, never the desk's working */
+/** what the caller gets: the post, without the desk's working */
 export type DigestItem = Omit<DigestPick, "shape" | "why"> & {
   slug: string
   url: string
@@ -424,7 +415,7 @@ export async function digest(opts: DigestOpts = {}, deps: DigestDeps = {}): Prom
   // serial on purpose: one chromium page and one wall at a time
   for (const pick of picks) {
     const tags = ["news", pick.topic, ...(source ? [source] : []), ...(opts.forgeOpts?.tags ?? [])]
-    // the desk's working belongs in the journal, not in Binary's response
+    // the desk's working goes to the journal, not the response
     const { shape, why, ...post } = pick
     note(`pick [${pick.topic}/${shape}] ${pick.templateId} — ${pick.title} — ${why}`)
     try {
@@ -440,7 +431,7 @@ export async function digest(opts: DigestOpts = {}, deps: DigestDeps = {}): Prom
         shareUrl: forged.shareUrl,
       })
     } catch (err) {
-      // Binary gets the short form; the journal gets all of it, on one line
+      // the caller gets the short form; the journal gets all of it, on one line
       note(`failed "${pick.title}": ${(err instanceof Error ? err.message : String(err)).replace(/\s*\n\s*/g, " | ")}`)
       errors.push(`${pick.title}: ${oneLine(err)}`)
     }

@@ -572,8 +572,7 @@ describe("digest", () => {
     )
     expect(result.errors).toEqual([])
     expect(result.items).toHaveLength(2)
-    // exactly the wire Binary codes against — and `shape`/`why`, the desk's
-    // working, are NOT on it: they are for the journal and the relay's check
+    // the wire shape exactly; `shape`/`why` stay off it
     expect(result.items[0]).toEqual({
       title: STORY.title,
       blurb: STORY.blurb,

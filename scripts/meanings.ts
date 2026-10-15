@@ -1,21 +1,13 @@
 // What each famous template *says* — the curated half of the catalog.
 //
-// The API's catalog line gives a picker an id, a zone count, a name and (for
-// the templates with a layout in scripts/layouts/) the zones' roles. None of
-// that says what the picture means. A model reading "It's Happening  2z" has
-// nothing to go on but the words in the name, so it picks by the words in the
-// name — which is how a 54-year-old blood-group ratification ended up under Ron
-// Paul throwing his arms in the air with no joke attached.
+// The catalog gives an id, a zone count, a name and zone roles, but not what
+// the picture means. This file adds one hand-written line per well-known
+// template saying what it asserts, plus the joke SHAPES it can carry. The
+// /meme-news skill joins it onto the live catalog (ids missing from the catalog
+// never print), and relay/digest.ts refuses a pick whose stated shape the
+// template cannot hold.
 //
-// So: one hand-written line per recognisable template saying what the picture
-// asserts, plus the joke SHAPES it can carry. The /meme-news skill joins this
-// onto the live catalog (an id here that no longer exists in the catalog simply
-// never prints, so a stale entry is harmless), and relay/digest.ts uses the
-// shapes to refuse a pick whose stated joke shape the template cannot hold.
-//
-// Deliberately partial. ~85 of ~270 templates, the ones a room recognises on
-// sight; the rest keep the name-and-roles line they always had. A meaning you
-// are not sure of is worse than no meaning — leave it out.
+// Partial: ~85 of ~270 templates. Leave out a meaning you are not sure of.
 import fs from "node:fs"
 import path from "node:path"
 import { z } from "zod"

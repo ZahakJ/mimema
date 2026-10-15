@@ -2,15 +2,12 @@
 # The relay daemon: a loopback HTTP door (default 127.0.0.1:8006) that takes a
 # chat transcript, runs the /meme skill through `claude -p`, renders the pick in
 # a headless browser, and posts it to the wall. Mimema itself stays AI-free;
-# this unit is the only thing in the suite that talks to a model.
+# this unit is the only part that talks to a model.
 #
-# Its only client is Binary, the Go Discord bot (~/Documents/side/discord/
-# go_binary): it gathers and formats the transcript and POSTs /forge. Nothing
-# in the app imports relay/.
+# A chat bot or scheduler is the client: it formats the transcript and POSTs
+# /forge or /digest. Nothing in the app imports relay/.
 #
-# NOT symlinked by default — you need the `claude` CLI logged in and an
-# INVITE_KEY in .env first. See the Relay section of the README for the enable
-# commands.
+# Needs the `claude` CLI signed in and an INVITE_KEY in .env. See docs/RELAY.md.
 PartOf=avicenna-suite.target
 Description=Mimema relay (POST /forge → /meme → the wall)
 Wants=network-online.target
