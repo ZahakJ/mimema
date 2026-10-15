@@ -158,29 +158,55 @@ export const runClaude: ClaudeRunner = ({ prompt, cwd, timeoutMs, model, allowed
     })
     child.on("close", (code) => {
       clearTimeout(timer)
-      if (timedOut) return reject(new Error(`claude timed out after ${timeoutMs}ms`))
-      if (code !== 0) return reject(new Error(`claude exited ${code}: ${err.trim().slice(0, 500)}`))
-      let envelope: { result?: unknown; is_error?: unknown; total_cost_usd?: unknown; duration_ms?: unknown }
       try {
-        envelope = JSON.parse(out)
-      } catch {
-        return reject(new Error(`claude did not return JSON: ${out.slice(0, 300)}`))
+        resolve(claudeResult({ code, out, err, timedOut, timeoutMs, model }))
+      } catch (e) {
+        reject(e)
       }
-      if (envelope.is_error) {
-        return reject(new Error(`claude reported an error: ${String(envelope.result).slice(0, 300)}`))
-      }
-      if (typeof envelope.result !== "string") {
-        return reject(new Error("claude returned no result field"))
-      }
-      // What the run cost, on stderr for the journal. Nothing else records it,
-      // and "is the digest worth opus" is otherwise unanswerable after the fact.
-      if (typeof envelope.total_cost_usd === "number") {
-        const secs = typeof envelope.duration_ms === "number" ? Math.round(envelope.duration_ms / 1000) : "?"
-        console.error(`[relay] ${model ?? DEFAULT_MODEL} run: $${envelope.total_cost_usd.toFixed(3)}, ${secs}s`)
-      }
-      resolve(envelope.result)
     })
   })
+}
+
+/**
+ * Turn a finished `claude -p --output-format json` run into its result text or
+ * an Error that says why. On a failed run the CLI often puts the reason (usage
+ * limit, auth) in the stdout envelope and leaves stderr empty, so a non-zero
+ * exit still reads stdout before giving up.
+ */
+export function claudeResult(run: {
+  code: number | null
+  out: string
+  err: string
+  timedOut: boolean
+  timeoutMs: number
+  model?: string | undefined
+}): string {
+  const { code, out, err, timedOut, timeoutMs, model } = run
+  if (timedOut) throw new Error(`claude timed out after ${timeoutMs}ms`)
+  let envelope: { result?: unknown; is_error?: unknown; total_cost_usd?: unknown; duration_ms?: unknown } | null =
+    null
+  try {
+    const parsed: unknown = JSON.parse(out)
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) envelope = parsed
+  } catch {
+    // handled below
+  }
+  if (code !== 0) {
+    const why = [err.trim(), envelope ? String(envelope.result ?? "").trim() : out.trim()]
+      .filter((s) => s !== "")
+      .join(" — ")
+    throw new Error(`claude exited ${code}: ${why.replace(/\s+/g, " ").slice(0, 500) || "(no output)"}`)
+  }
+  if (!envelope) throw new Error(`claude did not return JSON: ${out.slice(0, 300)}`)
+  if (envelope.is_error) throw new Error(`claude reported an error: ${String(envelope.result).slice(0, 300)}`)
+  if (typeof envelope.result !== "string") throw new Error("claude returned no result field")
+  // What the run cost, on stderr for the journal. Nothing else records it,
+  // and "is the digest worth opus" is otherwise unanswerable after the fact.
+  if (typeof envelope.total_cost_usd === "number") {
+    const secs = typeof envelope.duration_ms === "number" ? Math.round(envelope.duration_ms / 1000) : "?"
+    console.error(`[relay] ${model ?? DEFAULT_MODEL} run: $${envelope.total_cost_usd.toFixed(3)}, ${secs}s`)
+  }
+  return envelope.result
 }
 
 /** step 1a on its own — the cheap half, what `--dry-run` stops at */
@@ -231,14 +257,41 @@ export function dataUrlToBuffer(dataUrl: string): Buffer {
   return buf
 }
 
-let browserPromise: Promise<Browser> | null = null
+export type BrowserLauncher = () => Promise<Browser>
 
-/** one chromium for the life of the process; the bot renders all day */
-export async function browser(): Promise<Browser> {
+const launchChromium: BrowserLauncher = () => import("playwright").then((pw) => pw.chromium.launch())
+
+let browserPromise: Promise<Browser> | null = null
+let signalsHooked = false
+
+/**
+ * One chromium for the life of the process; the bot renders all day. If it
+ * dies (crash, or killed under memory pressure) or never came up, the next
+ * call launches a fresh one instead of handing out the corpse.
+ */
+export async function browser(launch: BrowserLauncher = launchChromium): Promise<Browser> {
+  if (browserPromise) {
+    const current = browserPromise
+    const live = await current.then((b) => b.isConnected()).catch(() => false)
+    if (live) return current
+    if (browserPromise === current) browserPromise = null
+  }
   if (!browserPromise) {
-    browserPromise = import("playwright").then((pw) => pw.chromium.launch())
-    process.once("SIGTERM", () => void closeBrowser())
-    process.once("SIGINT", () => void closeBrowser())
+    const launching = launch().then((b) => {
+      b.on("disconnected", () => {
+        if (browserPromise === launching) browserPromise = null
+      })
+      return b
+    })
+    launching.catch(() => {
+      if (browserPromise === launching) browserPromise = null
+    })
+    browserPromise = launching
+    if (!signalsHooked) {
+      signalsHooked = true
+      process.once("SIGTERM", () => void closeBrowser())
+      process.once("SIGINT", () => void closeBrowser())
+    }
   }
   return browserPromise
 }
