@@ -6,13 +6,17 @@
  * process owns the model call, the headless render and the INVITE_KEY.
  *
  *   GET  /healthz → "ok"
- *   POST /forge   → { context, source?, chatId? } → { slug, url, shareUrl,
- *                    templateId, captions, title }
+ *   POST /forge   → { context, source?, chatId?, dryRun? } → { slug, url,
+ *                    shareUrl, templateId, captions, title }; with dryRun the
+ *                    meme is picked and rendered but not posted, and the
+ *                    answer is { dryRun, templateId, captions, title, bytes }
  *   POST /digest  → { count?, source?, exclude?, interests?, feedback? }
  *                    → { items, errors }
  *
  * No auth: the socket is loopback-only, so anything that can reach it can
- * already read .env. Do not bind a routable address.
+ * already read .env. Do not bind a routable address. The *content* is another
+ * matter — the transcript is strangers' text — which is why the model run
+ * behind /forge has no tools at all (see forge.ts).
  */
 import http from "node:http"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
@@ -51,7 +55,7 @@ export type HandlerDeps = {
   gate?: Gate
 }
 
-export type ForgeRequest = { context: string; source?: string; chatId?: string }
+export type ForgeRequest = { context: string; source?: string; chatId?: string; dryRun?: boolean }
 export type DigestRequest = {
   count: number
   source?: string
@@ -116,13 +120,19 @@ export function parseForgeRequest(raw: string): ForgeRequest {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     throw new BadRequest("body must be a JSON object")
   }
-  const { context, source, chatId } = body as Record<string, unknown>
+  const { context, source, chatId, dryRun } = body as Record<string, unknown>
   if (typeof context !== "string" || context.trim() === "") {
     throw new BadRequest("context must be a non-empty string")
   }
   if (source !== undefined && typeof source !== "string") throw new BadRequest("source must be a string")
   if (chatId !== undefined && typeof chatId !== "string") throw new BadRequest("chatId must be a string")
-  return { context, ...(source === undefined ? {} : { source }), ...(chatId === undefined ? {} : { chatId }) }
+  if (dryRun !== undefined && typeof dryRun !== "boolean") throw new BadRequest("dryRun must be a boolean")
+  return {
+    context,
+    ...(source === undefined ? {} : { source }),
+    ...(chatId === undefined ? {} : { chatId }),
+    ...(dryRun === true ? { dryRun } : {}),
+  }
 }
 
 export function parseDigestRequest(raw: string): DigestRequest {
@@ -244,14 +254,21 @@ export function createHandler(deps: HandlerDeps = {}): http.RequestListener {
         const contextPath = path.join(dir, "context.txt")
         try {
           await writeFile(contextPath, request.context, "utf8")
-          return await forge(contextPath, { tags: source ? [source] : [] })
+          const opts: ForgeOpts = { tags: source ? [source] : [] }
+          if (request.dryRun) opts.publish = false
+          return await forge(contextPath, opts)
         } finally {
           // the transcript is someone else's chat: it lives only as long as the forge
           await rm(dir, { recursive: true, force: true }).catch(() => undefined)
         }
       }, chatId)
+      if (!result.published) {
+        console.log(`[relay] ${chatId} → ${result.templateId} (dry run, ${result.pngBytes.byteLength} bytes)`)
+        const { templateId, captions, title } = result
+        return send(res, 200, { dryRun: true, templateId, captions, title, bytes: result.pngBytes.byteLength })
+      }
       // pngBytes stays here: the client fetches the image from the wall URL
-      const { pngBytes: _png, ...dto } = result
+      const { pngBytes: _png, published: _published, ...dto } = result
       console.log(`[relay] ${chatId} → ${result.templateId} → ${result.shareUrl}`)
       send(res, 200, dto)
     } catch (err) {

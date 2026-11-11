@@ -1,8 +1,8 @@
 [Unit]
 # The relay daemon: a loopback HTTP door (default 127.0.0.1:8006) that takes a
-# chat transcript, runs the /meme skill through `claude -p`, renders the pick in
-# a headless browser, and posts it to the wall. Mimema itself stays AI-free;
-# this unit is the only part that talks to a model.
+# chat transcript, has `claude -p` pick a template and captions, renders the
+# pick in a headless browser, and posts it to the wall. Mimema itself stays
+# AI-free; this unit is the only part that talks to a model.
 #
 # A chat bot or scheduler is the client: it formats the transcript and POSTs
 # /forge or /digest. Nothing in the app imports relay/.
@@ -24,22 +24,49 @@ Environment=NODE_ENV=production
 # `claude` lives in ~/.local/bin, and systemd user units get a bare PATH
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 
-# Deliberately lighter sandboxing than meme.service: this process forks
-# headless chromium (which wants user namespaces for its own sandbox) and the
-# `claude` CLI (which writes session state under ~/.claude and reads its
-# credentials there). ProtectHome / RestrictNamespaces / a tight syscall filter
-# break both, so they are off on purpose — don't copy them back in from
-# meme.service without testing a real POST /forge end to end.
+# The model runs read text written by strangers (chat, web pages). The relay
+# gives them no shell or file tools (relay/forge.ts); this sandbox is the
+# second line: the process sees an empty home with only what it needs bound in.
+#
+# Claude CLI state: a private config dir, so the model runs never load or
+# write the user's settings, hooks, skills, MCP servers or ~/.claude.json.
+# Only the sign-in is shared, as one bound file, so token refreshes reach the
+# user's own sessions too.
+StateDirectory=meme-relay meme-relay/claude
+Environment=CLAUDE_CONFIG_DIR=%S/meme-relay/claude
+ProtectHome=tmpfs
+BindReadOnlyPaths=%h/Documents/side/mimema
+BindReadOnlyPaths=%h/.local/bin/claude %h/.local/share/claude
+BindReadOnlyPaths=-%h/.cache/ms-playwright
+BindPaths=%h/.claude/.credentials.json:%S/meme-relay/claude/.credentials.json
+# other mounts with personal data
+InaccessiblePaths=-/mnt -/media -/run/media -/srv
+
 NoNewPrivileges=yes
+KeyringMode=private
+PrivateUsers=yes
+ProtectProc=invisible
 PrivateTmp=yes
+PrivateDevices=yes
 ProtectSystem=strict
-ReadWritePaths=-%h/.claude -%h/.claude.json -%h/.cache -%h/.config/claude -%h/.local/share/claude
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
+ProtectKernelLogs=yes
 ProtectControlGroups=yes
-LockPersonality=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
 RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0077
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+# IPAddressDeny= would keep it off the LAN, but a user manager cannot attach
+# the BPF filter it needs; run it as a system unit to get that.
 MemoryMax=4G
 TasksMax=512
 

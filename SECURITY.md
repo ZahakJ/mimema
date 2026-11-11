@@ -18,4 +18,10 @@ Everything served is public.
   HTML, and upload size caps.
 - The server binds loopback (`127.0.0.1`, `::1`) and expects a TLS proxy in
   front. Rate limits trust `CF-Connecting-IP`.
+- The optional relay (`relay/`) feeds chat messages and web pages to a
+  language model. That text is treated as untrusted. The model has no shell
+  or file tools, and the news desk has only web search and fetch. The relay
+  does every fetch, render and write itself and validates the model's JSON
+  against a strict schema. Its systemd unit runs with an empty home and a
+  private CLI config. Details: [docs/RELAY.md](docs/RELAY.md#trust-boundary).
 - Out of scope: attacks that need the key, filling the disk, meme content.

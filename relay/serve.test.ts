@@ -23,6 +23,7 @@ const RESULT: ForgeResult = {
   captions: ["a", "b"],
   title: "Define backups",
   pngBytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+  published: true,
 }
 
 const DIGEST_ITEM = {
@@ -152,6 +153,20 @@ describe("POST /forge — the happy path", () => {
     await post({ context: "hi", source: "slack chat!" })
     await post({ context: "hi" })
     expect(calls.map((c) => c.tags)).toEqual([["discord"], [], []])
+  })
+
+  it("dryRun renders without publishing and says so", async () => {
+    const calls: ForgeOpts[] = []
+    const forge: ForgeFn = async (_p, opts = {}) => {
+      calls.push(opts)
+      return { ...RESULT, slug: "", url: "", shareUrl: "", published: opts.publish !== false }
+    }
+    const { post } = await serve({ forge })
+    const res = await post({ context: "hi", dryRun: true })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ dryRun: true, templateId: "drake", captions: ["a", "b"], title: "Define backups", bytes: 4 })
+    expect(calls[0]?.publish).toBe(false)
+    expect((await post({ context: "hi", dryRun: "yes" })).status).toBe(400)
   })
 
   it("sanitizes a source to a lowercase slug or nothing", () => {

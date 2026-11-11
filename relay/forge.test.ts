@@ -1,8 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { EventEmitter } from "node:events"
+import { mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import path from "node:path"
+import type { TemplateDto } from "../shared/schema.ts"
 import type { Browser } from "playwright"
 import {
   browser,
+  catalogText,
   claudeResult,
   closeBrowser,
   dataUrlToBuffer,
@@ -13,6 +18,7 @@ import {
   parsePick,
   pickMeme,
   postItem,
+  type ClaudeRunner,
 } from "./forge.ts"
 
 const PICK = '{"templateId":"drake","captions":["a","b"],"title":"T","alt":null}'
@@ -74,6 +80,15 @@ describe("parsePick", () => {
 
   it("rejects non-string captions", () => {
     expect(() => parsePick('{"templateId":"x","captions":[1,2],"title":"t","alt":null}')).toThrow(/captions/)
+  })
+
+  it("rejects an unknown key, a non-slug id, and an over-long caption", () => {
+    expect(() => parsePick('{"templateId":"x","captions":[],"title":"t","alt":null,"run":"ls"}')).toThrow(/run/)
+    expect(() => parsePick('{"templateId":"../etc/passwd","captions":[],"title":"t","alt":null}')).toThrow(
+      /templateId/,
+    )
+    const long = JSON.stringify({ templateId: "x", captions: ["y".repeat(201)], title: "t", alt: null })
+    expect(() => parsePick(long)).toThrow(/captions/)
   })
 })
 
@@ -140,28 +155,64 @@ describe("dataUrlToBuffer", () => {
 })
 
 describe("pickMeme", () => {
-  it("runs the /meme slash form at the repo root and parses the answer", async () => {
-    const calls: unknown[] = []
-    const pick = await pickMeme("/tmp/ctx.txt", {
+  let dir = ""
+  let ctx = ""
+  beforeEach(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), "mimema-test-"))
+    ctx = path.join(dir, "context.txt")
+    await writeFile(ctx, "[09:00] dana: ship it", "utf8")
+  })
+  afterEach(() => rm(dir, { recursive: true, force: true }))
+
+  it("hands the model the meme skill, the catalog and the chat, and no tools", async () => {
+    const calls: Parameters<ClaudeRunner>[0][] = []
+    const pick = await pickMeme(ctx, {
       model: "sonnet",
+      catalog: "drake\t2z\tDrake",
       runner: async (args) => {
         calls.push(args)
         return "```json\n" + PICK + "\n```"
       },
     })
     expect(pick.templateId).toBe("drake")
-    expect(calls[0]).toMatchObject({ prompt: "/meme --json /tmp/ctx.txt", model: "sonnet" })
-    expect((calls[0] as { cwd: string }).cwd).toMatch(/mimema$/)
+    expect(calls[0]).toMatchObject({ model: "sonnet", tools: [] })
+    expect(calls[0]?.system).toContain("# /meme")
+    expect(calls[0]?.system).not.toMatch(/^---/)
+    expect(calls[0]?.prompt).toMatch(/^Arguments: --json\n/)
+    expect(calls[0]?.prompt).toContain("drake\t2z\tDrake")
+    expect(calls[0]?.prompt).toContain("[09:00] dana: ship it")
   })
 
   it("surfaces a runner failure", async () => {
     await expect(
-      pickMeme("/tmp/ctx.txt", {
+      pickMeme(ctx, {
+        catalog: "",
         runner: async () => {
           throw new Error("claude timed out after 180000ms")
         },
       }),
     ).rejects.toThrow(/timed out/)
+  })
+})
+
+describe("catalogText", () => {
+  const zone = (placeholder: string) => ({ placeholder }) as TemplateDto["zones"][number]
+  const t = (id: string, name: string, zones: string[]) => ({ id, name, zones: zones.map(zone) }) as TemplateDto
+
+  it("prints id, zone count, name, real zone roles and the curated meaning", () => {
+    const text = catalogText(
+      [t("drake", "Drake", ["REJECTED", "APPROVED"]), t("plain", "Plain", ["TOP TEXT", "BOTTOM TEXT"])],
+      { drake: { says: "no to one, yes to the other", shapes: ["contrast"] } },
+    )
+    expect(text.split("\n")).toEqual([
+      "drake\t2z\tDrake  [REJECTED | APPROVED]  <contrast> no to one, yes to the other",
+      "plain\t2z\tPlain",
+    ])
+  })
+
+  it("drops a template whose id is not a slug and flattens newlines in names", () => {
+    const text = catalogText([t("../x", "bad", ["A"]), t("ok", "two\nlines", ["A"])], {})
+    expect(text).toBe("ok\t1z\ttwo lines  [A]")
   })
 })
 

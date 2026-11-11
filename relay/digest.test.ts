@@ -1,14 +1,15 @@
-import { describe, expect, it } from "vitest"
-import { readFile } from "node:fs/promises"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   DEFAULT_COUNT,
   DEFAULT_NEWS_MODEL,
   MAX_COUNT,
   MAX_FEEDBACK,
   MAX_FEEDBACK_TITLE,
+  MAX_EXCLUDE,
   MAX_INTERESTS_CHARS,
   NEWS_TOOLS,
   clampCount,
+  cleanExclude,
   cleanFeedback,
   cleanInterests,
   digest,
@@ -19,6 +20,7 @@ import {
   tagSafe,
   tasteFile,
   vetPicks,
+  type DigestDeps,
   type DigestPick,
   type Feedback,
 } from "./digest.ts"
@@ -50,6 +52,10 @@ const SECOND: DigestPick = {
 
 const json = (...items: object[]) => JSON.stringify({ items })
 
+// the desk's catalog comes from the API; here it is an empty one
+beforeEach(() => vi.stubGlobal("fetch", async () => Response.json([])))
+afterEach(() => vi.unstubAllGlobals())
+
 /** a forgePick that always succeeds, recording what it was handed */
 function fakeForge(calls: { pick: Pick; opts: ForgeOpts | undefined }[] = []) {
   return {
@@ -64,6 +70,7 @@ function fakeForge(calls: { pick: Pick; opts: ForgeOpts | undefined }[] = []) {
         captions: pick.captions,
         title: pick.title,
         pngBytes: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        published: true,
       }
     },
   }
@@ -354,82 +361,59 @@ describe("redoFile", () => {
 })
 
 describe("pickNews", () => {
-  it("runs the slash form at the repo root with the web tools allowed", async () => {
-    const calls: Parameters<NonNullable<Parameters<typeof pickNews>[1]>["runner"] & object>[0][] = []
+  type RunArgs = Parameters<NonNullable<DigestDeps["runner"]>>[0]
+  const block = (prompt: string, label: string) =>
+    new RegExp(`=====BEGIN ${label} (\\w+)=====\\n([\\s\\S]*?)\\n=====END ${label} \\1=====`).exec(prompt)?.[2]
+
+  it("asks the desk with the news skill, the web tools and nothing else", async () => {
+    const calls: RunArgs[] = []
     await pickNews(
       { count: 3, model: "sonnet" },
       {
+        catalog: "drake\t2z\tDrake",
         runner: async (args) => {
           calls.push(args)
           return json(STORY)
         },
       },
     )
-    expect(calls[0]?.prompt).toBe("/meme-news --json --count 3")
+    expect(calls[0]?.prompt).toMatch(/^Arguments: --json --count 3\ndate: \d{4}-\d{2}-\d{2}\n/)
+    expect(block(calls[0]!.prompt, "CATALOG")).toBe("drake\t2z\tDrake")
+    expect(calls[0]?.system).toContain("/meme-news")
     expect(calls[0]?.model).toBe("sonnet")
-    expect(calls[0]?.allowedTools).toEqual(NEWS_TOOLS)
-    expect(calls[0]?.allowedTools).toContain("WebSearch")
-    expect(calls[0]?.allowedTools).toContain("WebFetch")
-    expect(calls[0]?.cwd).toMatch(/mimema$/)
+    expect(calls[0]?.tools).toEqual(["WebSearch", "WebFetch"])
+    expect(calls[0]?.tools).toEqual(NEWS_TOOLS)
     expect(calls[0]?.timeoutMs).toBe(300_000)
   })
 
-  it("writes the exclude list to a temp file, passes its path, and removes it after", async () => {
-    let seen: { path: string; text: string } | null = null
+  it("fences the exclude list into the prompt, trimmed and capped", async () => {
+    let prompt = ""
     await pickNews(
       { exclude: ["Old headline", "https://example.com/old", "  ", ""] },
-      {
-        runner: async ({ prompt }) => {
-          const p = /--exclude (\S+)/.exec(prompt)?.[1] ?? ""
-          seen = { path: p, text: await readFile(p, "utf8") }
-          return json(STORY)
-        },
-      },
+      { runner: async (a) => ((prompt ||= a.prompt), json(STORY)) },
     )
-    const got = seen as unknown as { path: string; text: string }
-    expect(got.text).toBe("Old headline\nhttps://example.com/old\n")
-    expect(await readFile(got.path, "utf8").catch(() => null)).toBeNull()
+    expect(prompt).toMatch(/^Arguments: --json --count 2 --exclude\n/)
+    expect(block(prompt, "EXCLUDE")).toBe("Old headline\nhttps://example.com/old")
+    expect(cleanExclude(Array.from({ length: 500 }, (_, i) => `t${i} ${"x".repeat(400)}`))).toHaveLength(MAX_EXCLUDE)
   })
 
-  it("writes the taste file next to the exclude list and passes --taste", async () => {
-    let seen: { prompt: string; taste: string; exclude: string } | null = null
+  it("fences the taste brief next to the exclude list and passes --taste", async () => {
+    let prompt = ""
     await pickNews(
       { exclude: ["Old headline"], interests: "medicine, science", feedback: [CARDINALS, LEVEL5] },
-      {
-        runner: async ({ prompt }) => {
-          const taste = /--taste (\S+)/.exec(prompt)?.[1] ?? ""
-          const exclude = /--exclude (\S+)/.exec(prompt)?.[1] ?? ""
-          // the first ask; a re-ask appends --redo and is its own test
-          seen ??= { prompt, taste: await readFile(taste, "utf8"), exclude }
-          return json(STORY)
-        },
-      },
+      { runner: async (a) => ((prompt ||= a.prompt), json(STORY)) },
     )
-    const got = seen as unknown as { prompt: string; taste: string; exclude: string }
-    expect(got.prompt).toMatch(/^\/meme-news --json --count 2 --exclude \S+\/exclude\.txt --taste \S+\/taste\.md$/)
-    expect(got.taste).toBe(tasteFile("medicine, science", [CARDINALS, LEVEL5]))
-    // same mkdtemp dir for both files
-    const tastePath = /--taste (\S+)/.exec(got.prompt)![1]!
-    expect(tastePath.slice(0, tastePath.lastIndexOf("/"))).toBe(got.exclude.slice(0, got.exclude.lastIndexOf("/")))
-    expect(await readFile(tastePath, "utf8").catch(() => null)).toBeNull()
+    expect(prompt).toMatch(/^Arguments: --json --count 2 --exclude --taste\n/)
+    expect(block(prompt, "TASTE")).toBe(tasteFile("medicine, science", [CARDINALS, LEVEL5]).trimEnd())
   })
 
-  it("writes a taste file with no exclude list, from interests alone or feedback alone", async () => {
+  it("passes a taste brief with no exclude list, from interests alone or feedback alone", async () => {
     for (const opts of [{ interests: "video games" }, { feedback: [LEVEL5] }]) {
       let prompt = ""
-      let taste = ""
-      await pickNews(opts, {
-        runner: async (a) => {
-          if (prompt === "") {
-            prompt = a.prompt
-            taste = await readFile(/--taste (\S+)/.exec(a.prompt)![1]!, "utf8")
-          }
-          return json(STORY)
-        },
-      })
+      await pickNews(opts, { runner: async (a) => ((prompt ||= a.prompt), json(STORY)) })
       expect(prompt).not.toContain("--exclude")
-      expect(prompt).toMatch(/--taste \S+\/taste\.md$/)
-      expect(taste).toContain("# Interests")
+      expect(prompt).toMatch(/^Arguments: --json --count 2 --taste\n/)
+      expect(block(prompt, "TASTE")).toContain("# Interests")
     }
   })
 
@@ -439,13 +423,15 @@ describe("pickNews", () => {
       { count: 1, interests: "   ", feedback: [{ bad: true } as never] },
       { runner: async (a) => ((prompt = a.prompt), json(STORY)) },
     )
-    expect(prompt).toBe("/meme-news --json --count 1")
+    expect(prompt).toMatch(/^Arguments: --json --count 1\n/)
+    expect(prompt).not.toContain("BEGIN TASTE")
   })
 
   it("omits --exclude when there is nothing to exclude", async () => {
     let prompt = ""
     await pickNews({ count: 1 }, { runner: async (a) => ((prompt = a.prompt), json(STORY)) })
-    expect(prompt).toBe("/meme-news --json --count 1")
+    expect(prompt).toMatch(/^Arguments: --json --count 1\n/)
+    expect(prompt).not.toContain("BEGIN EXCLUDE")
   })
 
   it("clamps an out-of-range count before asking", async () => {
@@ -484,20 +470,20 @@ describe("pickNews", () => {
       {
         runner: async ({ prompt }) => {
           prompts.push(prompt)
-          const path = /--redo (\S+)/.exec(prompt)?.[1]
-          if (path === undefined) {
+          const got = block(prompt, "REDO")
+          if (got === undefined) {
             // one good pick, one whose captions are about nothing
             return json(STORY, { ...SECOND, captions: ["when you ship on a friday", "oh no"] })
           }
-          redo = await readFile(path, "utf8")
+          redo = got
           return json({ ...SECOND, topic: "sports", templateId: "gru-s-plan", shape: "predictable" })
         },
       },
     )
     expect(prompts).toHaveLength(2)
-    expect(prompts[0]).toBe("/meme-news --json --count 2")
+    expect(prompts[0]).toMatch(/^Arguments: --json --count 2\n/)
     // only the missing slot is re-asked for
-    expect(prompts[1]).toMatch(/^\/meme-news --json --count 1 --redo \S+\/redo\.md$/)
+    expect(prompts[1]).toMatch(/^Arguments: --json --count 1 --redo\n/)
     expect(redo).toMatch(/share not one name/)
     expect(redo).toContain(STORY.title)
     expect(picks).toHaveLength(2)
@@ -517,7 +503,7 @@ describe("pickNews", () => {
       {
         runner: async ({ prompt }) => {
           prompts.push(prompt)
-          return prompt.includes("--redo") ? json(STORY) : "I could not find any news today."
+          return prompt.includes("BEGIN REDO") ? json(STORY) : "I could not find any news today."
         },
       },
     )
@@ -531,22 +517,6 @@ describe("pickNews", () => {
     const picks = await pickNews({ count: 1 }, { runner: async () => json(flat) })
     expect(picks).toHaveLength(1)
     expect(picks[0]?.title).toBe(STORY.title)
-  })
-
-  it("removes the redo file with the rest of the temp dir", async () => {
-    let path = ""
-    await pickNews(
-      { count: 2 },
-      {
-        runner: async ({ prompt }) => {
-          const p = /--redo (\S+)/.exec(prompt)?.[1]
-          if (p !== undefined) path = p
-          return json(STORY)
-        },
-      },
-    )
-    expect(path).not.toBe("")
-    expect(await readFile(path, "utf8").catch(() => null)).toBeNull()
   })
 
   it("surfaces a runner failure", async () => {
@@ -627,6 +597,7 @@ describe("digest", () => {
       captions: [...pick.captions, ""],
       title: pick.title,
       pngBytes: Buffer.alloc(0),
+      published: true,
     })
     const result = await digest({ count: 1 }, { runner: async () => json(STORY), forgePick })
     expect(result.items[0]?.captions).toEqual([...STORY.captions, ""])
@@ -644,6 +615,7 @@ describe("digest", () => {
         captions: pick.captions,
         title: pick.title,
         pngBytes: Buffer.alloc(0),
+        published: true,
       }
     }
     const result = await digest({ count: 2 }, { runner: async () => json(STORY, SECOND), forgePick })

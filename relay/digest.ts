@@ -1,5 +1,5 @@
 /**
- * The news desk: a headless `claude -p` running the repo's /meme-news skill
+ * The news desk: a headless `claude -p` following the repo's /meme-news skill
  * searches today's stories, picks the meme-able ones, and hands back a forum
  * post (title + blurb + source) plus a template pick for each. Every pick then
  * goes through the ordinary forge pipeline — `forgePick()` — so a digest meme
@@ -7,18 +7,25 @@
  *
  * Partial success is the normal case: one story failing to render must not
  * cost the caller the other two.
+ *
+ * The desk reads the open web, so it is the most exposed model run here: it
+ * gets web search and fetch and nothing else — no shell, no file access. The
+ * catalog, the exclude list, the taste brief and the redo notes are fenced
+ * into its prompt by this process.
  */
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import path from "node:path"
 import { z } from "zod"
 import { JOKE_SHAPES, loadMeanings } from "../scripts/meanings.ts"
 import {
-  PICKER_TOOLS,
-  REPO_ROOT,
+  MAX_CAPTION_CHARS,
+  TEMPLATE_ID_RE,
+  UNTRUSTED_NOTE,
   extractJson,
+  fence,
+  loadCatalog,
+  nonce,
   forgePick as realForgePick,
   runClaude,
+  skillText,
   type ClaudeRunner,
   type ForgeOpts,
   type ForgeResult,
@@ -31,8 +38,11 @@ export const DEFAULT_COUNT = 2
 export const MAX_COUNT = 4
 /** model for /digest; MEME_NEWS_MODEL overrides, MEME_RELAY_MODEL does not apply */
 export const DEFAULT_NEWS_MODEL = "opus"
-/** the picker's tools plus the two the news desk actually needs */
-export const NEWS_TOOLS = ["WebSearch", "WebFetch", ...PICKER_TOOLS]
+/** reading the news needs the web and nothing else */
+export const NEWS_TOOLS: readonly string[] = ["WebSearch", "WebFetch"]
+/** the exclude list is the caller's memory; it is capped like the rest of the taste */
+export const MAX_EXCLUDE = 200
+export const MAX_EXCLUDE_CHARS = 300
 
 export const TOPICS = ["tech", "internet", "sports", "culture", "world", "science"] as const
 export type Topic = (typeof TOPICS)[number]
@@ -51,23 +61,27 @@ export type Feedback = { title: string; topic: string; up: number; down: number 
 export const MIN_WHY_CHARS = 20
 
 /** what /meme-news --json promises (see .claude/skills/meme-news/SKILL.md) */
-export const digestPickSchema = z.object({
-  title: z.string().min(1),
-  blurb: z.string().min(1),
-  // a well-formed URL is all zod can check; whether it is a *real* one is the
-  // skill's problem, and its Don'ts say so in as many words
-  sourceUrl: z.string().url(),
+export const digestPickSchema = z.strictObject({
+  title: z.string().min(1).max(200),
+  blurb: z.string().min(1).max(1_000),
+  // a well-formed http(s) URL is all zod can check; whether it is a *real* one
+  // is the skill's problem, and its Don'ts say so in as many words
+  sourceUrl: z
+    .string()
+    .max(2_000)
+    .url()
+    .regex(/^https?:\/\//i, "an http(s) URL"),
   topic: z.enum(TOPICS),
-  templateId: z.string().min(1),
-  captions: z.array(z.string()),
+  templateId: z.string().regex(TEMPLATE_ID_RE, "a template id is a lowercase slug"),
+  captions: z.array(z.string().max(MAX_CAPTION_CHARS)).max(8),
   // shape and why are the desk's working, checked by vetPicks() and dropped
   // from DigestItem
   shape: z.enum(JOKE_SHAPES),
-  why: z.string().min(MIN_WHY_CHARS),
+  why: z.string().min(MIN_WHY_CHARS).max(1_000),
 })
 export type DigestPick = z.infer<typeof digestPickSchema>
 
-export const digestSchema = z.object({ items: z.array(digestPickSchema) })
+export const digestSchema = z.strictObject({ items: z.array(digestPickSchema).max(10) })
 
 /** what the caller gets: the post, without the desk's working */
 export type DigestItem = Omit<DigestPick, "shape" | "why"> & {
@@ -97,6 +111,8 @@ export type DigestOpts = {
 export type DigestDeps = {
   /** injected by the tests so they never touch `claude` */
   runner?: ClaudeRunner
+  /** the catalog text, already built; injected by the tests so they never touch the API */
+  catalog?: string
   /** injected by the tests so they never touch a browser or the wall */
   forgePick?: (pick: Pick, opts?: ForgeOpts) => Promise<ForgeResult>
 }
@@ -154,9 +170,9 @@ export function cleanFeedback(raw: unknown[]): Feedback[] {
 }
 
 /**
- * The taste file the news desk reads before it picks: the standing brief and
+ * The taste brief the news desk reads before it picks: the standing brief and
  * the reactions to earlier posts, best-received first. Pure, so the shape is
- * testable without a model or a temp dir. The skill treats it as a prior, not
+ * testable without a model. The skill treats it as a prior, not
  * a rule — see .claude/skills/meme-news/SKILL.md.
  */
 export function tasteFile(interests: string | null | undefined, feedback: Feedback[] = []): string {
@@ -291,87 +307,107 @@ export function parseDigest(raw: string, count: number): DigestPick[] {
   return parsed.data.items.slice(0, count)
 }
 
+/** trimmed, one line each, capped in count and length */
+export function cleanExclude(raw: string[]): string[] {
+  return raw
+    .map((s) => s.replace(/\s+/g, " ").trim().slice(0, MAX_EXCLUDE_CHARS))
+    .filter((s) => s !== "")
+    .slice(0, MAX_EXCLUDE)
+}
+
+/**
+ * The desk's user turn: the arguments, today's date, the catalog, then each
+ * piece of caller- or model-derived text in its own fenced block. The skill
+ * reads `--exclude`, `--taste` and `--redo` as "the block of that name".
+ */
+export function newsPrompt(
+  args: { count: number; catalog: string; exclude: string[]; taste: string | null; redo: string | null; today: string },
+  tag: string = nonce(),
+): string {
+  let flags = `--json --count ${args.count}`
+  if (args.exclude.length > 0) flags += " --exclude"
+  if (args.taste !== null) flags += " --taste"
+  if (args.redo !== null) flags += " --redo"
+  const parts = [
+    `Arguments: ${flags}`,
+    `date: ${args.today}`,
+    "",
+    "Relay mode: your only tools are WebSearch and WebFetch. The catalog and the inputs named by the " +
+      "flags are below; answer with the JSON object only.",
+    UNTRUSTED_NOTE,
+    "",
+    fence("CATALOG", args.catalog, tag),
+  ]
+  if (args.exclude.length > 0) parts.push("", fence("EXCLUDE", args.exclude.join("\n"), tag))
+  if (args.taste !== null) parts.push("", fence("TASTE", args.taste, tag))
+  if (args.redo !== null) parts.push("", fence("REDO", args.redo, tag))
+  return parts.join("\n")
+}
+
 /**
  * The cheap half: search + pick, no browser and no INVITE_KEY. `--dry-run`
- * stops here. The exclude list and the taste file go to a temp dir rather than
- * the prompt so a long memory cannot push the instructions out of shape — and
- * it is removed in `finally`, same hygiene as the forge's transcript.
+ * stops here.
  */
 export async function pickNews(opts: DigestOpts = {}, deps: DigestDeps = {}): Promise<DigestPick[]> {
   const runner = deps.runner ?? runClaude
   const count = clampCount(opts.count)
-  const exclude = (opts.exclude ?? []).map((s) => s.trim()).filter((s) => s !== "")
+  const exclude = cleanExclude(opts.exclude ?? [])
   const interests = cleanInterests(opts.interests)
   const feedback = cleanFeedback(opts.feedback ?? [])
+  const taste = interests !== null || feedback.length > 0 ? tasteFile(interests, feedback) : null
+  const catalog = deps.catalog ?? (await loadCatalog(opts.forgeOpts))
+  const today = new Date().toISOString().slice(0, 10)
 
-  const dir = await mkdtemp(path.join(tmpdir(), "mimema-digest-"))
-  try {
-    let flags = ""
-    if (exclude.length > 0) {
-      const excludePath = path.join(dir, "exclude.txt")
-      await writeFile(excludePath, exclude.join("\n") + "\n", "utf8")
-      flags += ` --exclude ${excludePath}`
-    }
-    if (interests !== null || feedback.length > 0) {
-      const tastePath = path.join(dir, "taste.md")
-      await writeFile(tastePath, tasteFile(interests, feedback), "utf8")
-      flags += ` --taste ${tastePath}`
-    }
-    const ask = (n: number, extra = ""): Promise<string> =>
-      runner({
-        prompt: `/meme-news --json --count ${n}${flags}${extra}`,
-        cwd: REPO_ROOT,
-        timeoutMs: opts.timeoutMs ?? DIGEST_TIMEOUT_MS,
-        model: opts.model ?? process.env.MEME_NEWS_MODEL ?? DEFAULT_NEWS_MODEL,
-        allowedTools: NEWS_TOOLS,
-      })
+  const ask = (n: number, redo: string | null = null): Promise<string> =>
+    runner({
+      system: skillText("meme-news"),
+      prompt: newsPrompt({ count: n, catalog, exclude, taste, redo, today }),
+      timeoutMs: opts.timeoutMs ?? DIGEST_TIMEOUT_MS,
+      model: opts.model ?? process.env.MEME_NEWS_MODEL ?? DEFAULT_NEWS_MODEL,
+      tools: NEWS_TOOLS,
+    })
 
-    /** parse + vet in one, turning a malformed answer into a reason rather than a throw */
-    const round = (raw: string, n: number, sofar: DigestPick[]) => {
-      try {
-        const vetted = vetPicks([...sofar, ...parseDigest(raw, sofar.length + n)])
-        return { kept: vetted.kept, reasons: vetted.rejected, fatal: null as string | null }
-      } catch (err) {
-        return { kept: sofar, reasons: [] as Rejection[], fatal: oneLine(err) }
-      }
+  /** parse + vet in one, turning a malformed answer into a reason rather than a throw */
+  const round = (raw: string, n: number, sofar: DigestPick[]) => {
+    try {
+      const vetted = vetPicks([...sofar, ...parseDigest(raw, sofar.length + n)])
+      return { kept: vetted.kept, reasons: vetted.rejected, fatal: null as string | null }
+    } catch (err) {
+      return { kept: sofar, reasons: [] as Rejection[], fatal: oneLine(err) }
     }
-
-    const first = round(await ask(count), count, [])
-    let kept = first.kept
-    const spare = first.reasons.map((r) => r.pick)
-    for (const r of first.reasons) note(`rejected "${r.pick.title}" — ${r.why}`)
-    if (first.fatal) note(`first pass unusable — ${first.fatal}`)
-
-    // Exactly one re-ask, never two: the digest is already minutes long, and a
-    // desk that missed twice is not going to find it on the third try.
-    if (kept.length < count) {
-      const missing = count - kept.length
-      const redoPath = path.join(dir, "redo.md")
-      await writeFile(redoPath, redoFile(first.fatal, first.reasons, kept), "utf8")
-      const second = round(await ask(missing, ` --redo ${redoPath}`), missing, kept)
-      for (const r of second.reasons) note(`rejected (redo) "${r.pick.title}" — ${r.why}`)
-      if (second.fatal) note(`redo unusable — ${second.fatal}`)
-      kept = second.kept
-      spare.push(...second.reasons.map((r) => r.pick))
-    }
-
-    if (kept.length > 0) return kept.slice(0, count)
-    // Nothing passed twice over. A flawed meme still beats a silent morning, so
-    // the rejects ship with the reason in the journal — but only as a last resort.
-    if (spare.length > 0) {
-      note(`shipping ${Math.min(spare.length, count)} unvetted pick(s) — nothing passed`)
-      return spare.slice(0, count)
-    }
-    throw new Error(first.fatal ?? "the news desk found no stories worth memeing")
-  } finally {
-    await rm(dir, { recursive: true, force: true }).catch(() => undefined)
   }
+
+  const first = round(await ask(count), count, [])
+  let kept = first.kept
+  const spare = first.reasons.map((r) => r.pick)
+  for (const r of first.reasons) note(`rejected "${r.pick.title}" — ${r.why}`)
+  if (first.fatal) note(`first pass unusable — ${first.fatal}`)
+
+  // Exactly one re-ask, never two: the digest is already minutes long, and a
+  // desk that missed twice is not going to find it on the third try.
+  if (kept.length < count) {
+    const missing = count - kept.length
+    const second = round(await ask(missing, redoFile(first.fatal, first.reasons, kept)), missing, kept)
+    for (const r of second.reasons) note(`rejected (redo) "${r.pick.title}" — ${r.why}`)
+    if (second.fatal) note(`redo unusable — ${second.fatal}`)
+    kept = second.kept
+    spare.push(...second.reasons.map((r) => r.pick))
+  }
+
+  if (kept.length > 0) return kept.slice(0, count)
+  // Nothing passed twice over. A flawed meme still beats a silent morning, so
+  // the rejects ship with the reason in the journal — but only as a last resort.
+  if (spare.length > 0) {
+    note(`shipping ${Math.min(spare.length, count)} unvetted pick(s) — nothing passed`)
+    return spare.slice(0, count)
+  }
+  throw new Error(first.fatal ?? "the news desk found no stories worth memeing")
 }
 
 /**
  * What the desk is handed on the one re-ask: what it got wrong, in its own
- * titles, and what is already taken. A file rather than the prompt, same as
- * exclude.txt — a long list must not push the skill's instructions out of shape.
+ * titles, and what is already taken. Its own fenced block in the prompt: the
+ * titles came from the web.
  */
 export function redoFile(fatal: string | null, rejected: Rejection[], kept: DigestPick[]): string {
   const lines = [
